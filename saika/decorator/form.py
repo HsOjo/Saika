@@ -4,7 +4,7 @@ from saika.meta_table import MetaTable
 
 def form(form_cls, validate=None, **kwargs):
     if validate is None:
-        pass
+        validate = MetaTable.get(hard_code.MI_GLOBAL, hard_code.MK_FORM_VALIDATE, False)
 
     kwargs['validate'] = validate
 

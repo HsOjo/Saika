@@ -18,7 +18,7 @@ class ViewControlller(Controller):
         if template is None:
             url_prefix = self.options.get('url_prefix')
             view_function = self.context.get_view_function()
-            template = '%s/%s' % (url_prefix, view_function)
+            template = '%s/%s' % (url_prefix, view_function.__name__)
             template = re.sub('<.+?>', '', template)
             template = re.sub('/+', '/', template)
             template = '%s.html' % template.strip('/')

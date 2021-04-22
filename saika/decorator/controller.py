@@ -23,8 +23,6 @@ def register_controller(url_prefix, template_folder=None, static_folder=None, **
     return wrapper
 
 
-
-
 def _method(f, method):
     methods = MetaTable.get(f, hard_code.MK_METHODS, [])  # type: list
     methods.append(method)
