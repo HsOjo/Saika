@@ -1,0 +1,4 @@
+itsdangerous
+Flask_WTF
+Flask_SQLAlchemy
+Flask
