@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 import setuptools
 
+from saika.const import Const
+
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
@@ -9,7 +11,7 @@ with open("requirements.txt", "r") as fh:
 
 setuptools.setup(
     name="Saika",
-    version="0.0.1",
+    version=Const.version,
     author="HsOjo",
     author_email="hsojo@qq.com",
     keywords='hsojo python3 flask web',

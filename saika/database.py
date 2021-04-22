@@ -1,3 +1,4 @@
+from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import Session
 
@@ -7,7 +8,7 @@ from .meta_table import MetaTable
 
 
 def model(cls):
-    models = MetaTable.get(hard_code.MI_GLOBAL, hard_code.MK_MODELS, [])  # type: list
+    models = MetaTable.get(hard_code.MI_GLOBAL, hard_code.MK_MODEL_CLASSES, [])  # type: list
     models.append(cls)
     return cls
 
@@ -29,3 +30,4 @@ def merge_uri(config):
 
 
 db = Database()
+migrate = Migrate()

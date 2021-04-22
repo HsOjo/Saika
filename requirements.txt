@@ -1,4 +1,10 @@
+Flask_Migrate
+Flask
+Werkzeug
 itsdangerous
+WTForms
+SQLAlchemy
+setuptools
+Flask_Script
 Flask_WTF
 Flask_SQLAlchemy
-Flask

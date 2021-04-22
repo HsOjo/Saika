@@ -6,10 +6,11 @@ MK_CONTROLLER_CLASSES = 'controller_classes'
 MK_RULE_STR = 'rule_str'
 MK_METHODS = 'methods'
 MK_OPTIONS = 'options'
-MK_MODELS = 'models'
+MK_MODEL_CLASSES = 'model_classes'
 MK_FORM_CLASS = 'form_class'
 MK_FORM_ARGS = 'form_args'
 MK_FORM = 'form'
+MK_FORM_VALIDATE = 'form_validate'
 
 # Config Key
 CK_CORE = 'core'

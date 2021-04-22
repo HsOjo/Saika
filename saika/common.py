@@ -1,14 +1,6 @@
-import os
-
 from itsdangerous import TimedJSONWebSignatureSerializer
 
 from .environ import Environ
-
-
-def get_program_path():
-    app_path = Environ.app.root_path  # type: str
-    path = os.path.join(app_path, '../../dockore')
-    return path
 
 
 def obj_encrypt(obj, expires_in=None):
