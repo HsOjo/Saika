@@ -1,5 +1,5 @@
-from . import hard_code
-from .meta_table import MetaTable
+from saika import hard_code
+from saika.meta_table import MetaTable
 
 
 def rule(rule_str):

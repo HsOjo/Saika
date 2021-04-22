@@ -1,19 +1,19 @@
 import re
 
-from flask import Blueprint
+from flask import Blueprint, Flask
 
-from . import hard_code
-from .context import Context
-from .meta_table import MetaTable
+from saika import hard_code
+from saika.context import Context
+from saika.meta_table import MetaTable
 
 
 class Controller:
     def __init__(self, app):
         name = self.__class__.__name__.replace('Controller', '')
-        name = re.sub('[A-Z]', lambda x: '_' + x.group().lower(), name).lstrip('_')
-        import_name = self.__class__.__module__
+        self._name = re.sub('[A-Z]', lambda x: '_' + x.group().lower(), name).lstrip('_')
+        self._import_name = self.__class__.__module__
 
-        self._blueprint = Blueprint(name, import_name)
+        self._blueprint = Blueprint(self._name, self._import_name)
         self._register(app)
 
     @property
@@ -61,6 +61,7 @@ class Controller:
                     )
 
     def _register(self, app):
+        app: Flask
         self.callback_before_register()
         print('* Register Controller: %s %a' % (self.__class__, self.options))
         self._register_methods()

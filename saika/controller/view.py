@@ -1,6 +1,6 @@
 from flask import render_template
 
-from . import hard_code
+from saika import hard_code
 from .controller import Controller
 
 

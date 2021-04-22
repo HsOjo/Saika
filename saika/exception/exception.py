@@ -1,6 +1,6 @@
 from werkzeug.exceptions import HTTPException
 
-from .enums import APP_ERROR
+from saika.enums import APP_ERROR
 
 
 class AppException(HTTPException):

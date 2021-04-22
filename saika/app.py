@@ -28,8 +28,10 @@ class SaikaApp(Flask):
 
             self._import_modules()
 
-            controller_classes = MetaTable.get(hard_code.MI_GLOBAL, hard_code.MK_CONTROLLER_CLASSES, [])
-            self.controllers = [cls(self) for cls in controller_classes]
+            self._model_classes = MetaTable.get(hard_code.MI_GLOBAL, hard_code.MK_MODEL_CLASSES, [])
+            self._controller_classes = MetaTable.get(hard_code.MI_GLOBAL, hard_code.MK_CONTROLLER_CLASSES, [])
+
+            self.controllers = [cls(self) for cls in self._controller_classes]
         except:
             traceback.print_exc(file=sys.stderr)
 
