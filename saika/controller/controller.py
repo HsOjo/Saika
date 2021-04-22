@@ -1,6 +1,6 @@
 import re
 
-from flask import Blueprint, Flask
+from flask import Blueprint, Flask, abort, redirect, flash, url_for, send_file, send_from_directory, make_response
 
 from saika import hard_code
 from saika.context import Context
@@ -8,6 +8,14 @@ from saika.meta_table import MetaTable
 
 
 class Controller:
+    abort = abort
+    redirect = redirect
+    flash = flash
+    url_for = url_for
+    send_file = send_file
+    send_from_directory = send_from_directory
+    make_response = make_response
+
     def __init__(self, app):
         name = self.__class__.__name__.replace('Controller', '')
         self._name = re.sub('[A-Z]', lambda x: '_' + x.group().lower(), name).lstrip('_')
@@ -35,7 +43,13 @@ class Controller:
 
     @property
     def options(self):
-        return MetaTable.get(self.__class__, hard_code.MK_OPTIONS, {})
+        options = MetaTable.get(self.__class__, hard_code.MK_OPTIONS, {})  # type: dict
+        return options
+
+    @property
+    def view_function_options(self):
+        options = MetaTable.all(Context.get_view_function())  # type: dict
+        return options
 
     def _register_methods(self):
         keeps = dir(Controller)
@@ -53,7 +67,6 @@ class Controller:
                     f = f.__func__
                 meta = MetaTable.all(f)
                 if meta is not None:
-                    print('  - %s %a' % (f.__qualname__ if hasattr(f, '__qualname__') else f.__name__, meta))
                     self._blueprint.add_url_rule(
                         rule=meta[hard_code.MK_RULE_STR],
                         methods=meta[hard_code.MK_METHODS],
@@ -63,7 +76,6 @@ class Controller:
     def _register(self, app):
         app: Flask
         self.callback_before_register()
-        print('* Register Controller: %s %a' % (self.__class__, self.options))
         self._register_methods()
         app.register_blueprint(self._blueprint, **self.options)
 

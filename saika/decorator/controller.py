@@ -10,7 +10,7 @@ def rule(rule_str):
     return wrapper
 
 
-def register_controller(url_prefix, **options):
+def register_controller(url_prefix, template_folder=None, static_folder=None, **options):
     opts = locals().copy()
     opts.update(opts.pop('options'))
 
@@ -23,15 +23,6 @@ def register_controller(url_prefix, **options):
     return wrapper
 
 
-def form(form_cls, validate=True, **kwargs):
-    kwargs['validate'] = validate
-
-    def wrapper(f):
-        MetaTable.set(f, hard_code.MK_FORM_CLASS, form_cls)
-        MetaTable.set(f, hard_code.MK_FORM_ARGS, kwargs)
-        return f
-
-    return wrapper
 
 
 def _method(f, method):

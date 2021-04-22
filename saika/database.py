@@ -1,3 +1,4 @@
+from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import Session
 
@@ -29,3 +30,4 @@ def merge_uri(config):
 
 
 db = Database()
+migrate = Migrate()

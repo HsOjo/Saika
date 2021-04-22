@@ -15,7 +15,7 @@ class Context:
         return getattr(g, k, default)
 
     @staticmethod
-    def view_function():
+    def get_view_function():
         f = current_app.view_functions.get(request.endpoint)
         if hasattr(f, '__func__'):
             f = f.__func__
