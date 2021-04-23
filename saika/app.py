@@ -37,7 +37,7 @@ class SaikaApp(Flask):
             raise Exception('SaikaApp was created.')
 
         Environ.app = self
-        Environ.program_path = os.path.join(self.root_path, '../../dockore')
+        Environ.program_path = os.path.join(self.root_path, '..')
         Environ.config_path = os.path.join(Environ.program_path, Const.config_file)
         Environ.data_path = os.path.join(Environ.program_path, Const.data_dir)
 
