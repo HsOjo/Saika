@@ -14,8 +14,19 @@ class Config:
             _config = json.load(io)
 
     @staticmethod
-    def section(key) -> dict:
-        return _config.get(key)
+    def save(path):
+        cfg_str = json.dumps(_config)
+        with open(path, 'w') as io:
+            io.write(cfg_str)
+
+    @staticmethod
+    def section(key):
+        cfg = _config.get(key)  # type: dict
+        return cfg
+
+    @staticmethod
+    def all():
+        return _config
 
     @staticmethod
     def merge():
