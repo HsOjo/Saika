@@ -5,6 +5,8 @@ from saika.environ import Environ
 from saika.exception import AppException
 from saika.meta_table import MetaTable
 
+AUTO = object()
+
 
 class FormException(AppException):
     pass
@@ -19,10 +21,13 @@ def process_form():
     cls = MetaTable.get(f, hard_code.MK_FORM_CLASS)
     if cls is not None:
         args = MetaTable.get(f, hard_code.MK_FORM_ARGS)
-        form = cls(**args)  # type: Form
+        form = cls(**args)
         Context.g_set(hard_code.MK_FORM, form)
-        if args.get(hard_code.AK_VALIDATE):
-            if not form.validate():
-                raise FormException(*PARAMS_MISMATCH, data=dict(
-                    errors=common.obj_standard(form.errors, True, True)
-                ))
+
+        validate = args.get(hard_code.AK_VALIDATE, AUTO)
+        if validate is AUTO:
+            validate = Context.request.method != 'GET'
+        if validate and not form.validate():
+            raise FormException(*PARAMS_MISMATCH, data=dict(
+                errors=common.obj_standard(form.errors, True, True)
+            ))
