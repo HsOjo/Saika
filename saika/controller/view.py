@@ -2,7 +2,8 @@ import re
 
 from flask import render_template
 
-from saika import hard_code, MetaTable
+from saika import hard_code
+from saika.meta_table import MetaTable
 from .controller import Controller
 
 
