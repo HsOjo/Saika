@@ -29,6 +29,10 @@ class Controller:
         return self._blueprint
 
     @property
+    def name(self):
+        return self._name
+
+    @property
     def context(self):
         return Context
 
