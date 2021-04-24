@@ -2,7 +2,7 @@ import re
 
 from flask import render_template
 
-from saika import hard_code
+from saika import hard_code, MetaTable
 from .controller import Controller
 
 
@@ -16,9 +16,17 @@ class ViewControlller(Controller):
 
     def fetch(self, template=None):
         if template is None:
-            url_prefix = self.options.get('url_prefix')
             view_function = self.context.get_view_function()
-            template = '%s/%s' % (url_prefix, view_function.__name__)
+
+            url_prefix = self.options.get('url_prefix').strip('/')  # type: str
+            rule_str = MetaTable.get(view_function, hard_code.MK_RULE_STR).strip('/')  # type: str
+
+            if not url_prefix:
+                url_prefix = self.name
+            if not rule_str:
+                rule_str = view_function.__name__
+
+            template = '%s/%s' % (url_prefix, rule_str)
             template = re.sub('<.+?>', '', template)
             template = re.sub('/+', '/', template)
             template = '%s.html' % template.strip('/')

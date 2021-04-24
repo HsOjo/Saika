@@ -8,14 +8,6 @@ from saika.meta_table import MetaTable
 
 
 class Controller:
-    abort = abort
-    redirect = redirect
-    flash = flash
-    url_for = url_for
-    send_file = send_file
-    send_from_directory = send_from_directory
-    make_response = make_response
-
     def __init__(self, app):
         name = self.__class__.__name__.replace('Controller', '')
         self._name = re.sub('[A-Z]', lambda x: '_' + x.group().lower(), name).lstrip('_')
@@ -81,7 +73,17 @@ class Controller:
         app: Flask
         self.callback_before_register()
         self._register_methods()
+        self._init_flask_function()
         app.register_blueprint(self._blueprint, **self.options)
+
+    def _init_flask_function(self):
+        self.abort = abort
+        self.redirect = redirect
+        self.flash = flash
+        self.url_for = url_for
+        self.send_file = send_file
+        self.send_from_directory = send_from_directory
+        self.make_response = make_response
 
     def callback_before_register(self):
         pass
