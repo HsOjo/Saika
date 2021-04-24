@@ -10,7 +10,7 @@ def rule(rule_str):
     return wrapper
 
 
-def register_controller(url_prefix, template_folder=None, static_folder=None, **options):
+def controller(url_prefix, template_folder=None, static_folder=None, **options):
     opts = locals().copy()
     opts.update(opts.pop('options'))
 

@@ -16,7 +16,7 @@ class APIController(Controller):
         @self.blueprint.errorhandler(Exception)
         def catch(e: Exception):
             traceback.print_exc(file=sys.stderr)
-            return APIException(msg=str(e))
+            return APIException(data=dict(exc=str(e)))
 
     def response(self, code=0, msg=None, **data):
         return jsonify(code=code, msg=msg, data=data)

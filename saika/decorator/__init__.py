@@ -1,2 +1,2 @@
-from .controller import register_controller, get, post, rule
+from .controller import controller, get, post, rule
 from .form import form

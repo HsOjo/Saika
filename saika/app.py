@@ -23,12 +23,14 @@ class SaikaApp(Flask):
 
         try:
             self._init_env()
+            print(' * Saika Initializing...\n   - Version: %s' % Const.version)
             self._init_config()
             self._init_app()
 
             self.controllers = []
             self._import_modules()
             self._init_controllers()
+            print(' * Saika is ready now.')
         except:
             traceback.print_exc(file=sys.stderr)
 
@@ -37,7 +39,7 @@ class SaikaApp(Flask):
             raise Exception('SaikaApp was created.')
 
         Environ.app = self
-        Environ.program_path = os.path.join(self.root_path, '../../dockore')
+        Environ.program_path = os.path.join(self.root_path, '..')
         Environ.config_path = os.path.join(Environ.program_path, Const.config_file)
         Environ.data_path = os.path.join(Environ.program_path, Const.data_dir)
 
