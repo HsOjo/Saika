@@ -10,9 +10,18 @@ from werkzeug.serving import is_running_from_reloader
 from . import hard_code
 from .config import Config
 from .const import Const
+from .context import Context
 from .database import db, migrate
 from .environ import Environ
 from .meta_table import MetaTable
+
+
+def make_context():
+    context = dict(Config=Config, Const=Const, Context=Context, db=db, Environ=Environ, MetaTable=MetaTable)
+    classes = MetaTable.get(hard_code.MI_GLOBAL, hard_code.MK_MODEL_CLASSES, [])
+    for cls in classes:
+        context[cls.__name__] = cls
+    return context
 
 
 class SaikaApp(Flask):
@@ -30,6 +39,7 @@ class SaikaApp(Flask):
             self.controllers = []
             self._import_modules()
             self._init_callbacks()
+            self._init_context()
             self._init_controllers()
             print(' * Saika is ready now.')
         except:
@@ -65,6 +75,10 @@ class SaikaApp(Flask):
     def _init_controllers(self):
         controller_classes = MetaTable.get(hard_code.MI_GLOBAL, hard_code.MK_CONTROLLER_CLASSES, [])
         self.controllers = [cls(self) for cls in controller_classes]
+
+    def _init_context(self):
+        for name, obj in make_context().items():
+            self.add_template_global(obj, name)
 
     def _import_modules(self):
         module = self.__class__.__module__
