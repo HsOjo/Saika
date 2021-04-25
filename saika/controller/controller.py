@@ -34,7 +34,7 @@ class Controller:
 
     @property
     def form(self):
-        form = Context.g_get(hard_code.MK_FORM)
+        form = Context.g_get(hard_code.GK_FORM)
         return form
 
     @property

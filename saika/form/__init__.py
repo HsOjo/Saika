@@ -1,7 +1,4 @@
-from saika import hard_code
-from saika.meta_table import MetaTable
-from .field import ListField
-from .forms import Form, ArgsForm
+from .forms import Form, ArgsForm, JSONForm
 from .process import FormException, AUTO
 
 
@@ -14,4 +11,6 @@ def simple_choices(obj):
 
 
 def set_default_validate(enable=AUTO):
+    from saika import hard_code
+    from saika.meta_table import MetaTable
     MetaTable.set(hard_code.MI_GLOBAL, hard_code.MK_FORM_VALIDATE, enable)

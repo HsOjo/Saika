@@ -15,7 +15,7 @@ class Config:
 
     @staticmethod
     def save(path):
-        cfg_str = json.dumps(_config)
+        cfg_str = json.dumps(_config, ensure_ascii=False, indent=2)
         with open(path, 'w') as io:
             io.write(cfg_str)
 

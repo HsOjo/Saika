@@ -29,6 +29,7 @@ class SaikaApp(Flask):
 
             self.controllers = []
             self._import_modules()
+            self._init_callbacks()
             self._init_controllers()
             print(' * Saika is ready now.')
         except:
@@ -52,6 +53,14 @@ class SaikaApp(Flask):
         db.init_app(self)
         migrate.init_app(self, db)
         self.callback_init_app()
+
+    def _init_callbacks(self):
+        for f in MetaTable.get(hard_code.MI_CALLBACK, hard_code.MK_BEFORE_APP_REQUEST, []):
+            self.before_request(f)
+        for f in MetaTable.get(hard_code.MI_CALLBACK, hard_code.MK_BEFORE_APP_FIRST_REQUEST, []):
+            self.before_first_request(f)
+        for f in MetaTable.get(hard_code.MI_CALLBACK, hard_code.MK_AFTER_APP_REQUEST, []):
+            self.after_request(f)
 
     def _init_controllers(self):
         controller_classes = MetaTable.get(hard_code.MI_GLOBAL, hard_code.MK_CONTROLLER_CLASSES, [])
