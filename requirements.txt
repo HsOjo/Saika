@@ -8,3 +8,4 @@ setuptools
 Flask_Script
 Flask_WTF
 Flask_SQLAlchemy
+wtforms_json
