@@ -1,6 +1,8 @@
+import builtins
 import importlib
 import os
 import pkgutil
+import re
 import sys
 import traceback
 
@@ -79,6 +81,17 @@ class SaikaApp(Flask):
     def _init_context(self):
         for name, obj in make_context().items():
             self.add_template_global(obj, name)
+
+        items = []
+        for key in dir(builtins):
+            item = getattr(builtins, key)
+            type_name = type(item).__name__
+            if key[0] != '_' and hasattr(item, '__name__') and (
+                    type_name == 'builtin_function_or_method' or re.match('^[a-z]+$', key)):
+                items.append(item)
+
+        for item in items:
+            self.add_template_global(item)
 
     def _import_modules(self):
         module = self.__class__.__module__
