@@ -8,6 +8,7 @@ MI_CALLBACK = 'callback'
 # region Global Part
 MK_CONTROLLER_CLASSES = 'controller_classes'
 MK_MODEL_CLASSES = 'model_classes'
+MK_SIO_CONTROLLER_CLASSES = 'sio_controller_classes'
 # endregion
 
 # region Function Key

@@ -7,15 +7,16 @@ import sys
 import traceback
 
 from flask import Flask
-from werkzeug.serving import is_running_from_reloader
 
 from . import hard_code
 from .config import Config
 from .const import Const
 from .context import Context
+from .cors import cors
 from .database import db, migrate
 from .environ import Environ
 from .meta_table import MetaTable
+from .socket_io import socket_io
 
 
 def make_context():
@@ -29,8 +30,6 @@ def make_context():
 class SaikaApp(Flask):
     def __init__(self, **kwargs):
         super().__init__(self.__class__.__module__, **kwargs)
-        if self.debug and not is_running_from_reloader():
-            return
 
         try:
             self._init_env()
@@ -39,10 +38,13 @@ class SaikaApp(Flask):
             self._init_app()
 
             self.controllers = []
+            self.sio_controllers = []
+
             self._import_modules()
             self._init_callbacks()
             self._init_context()
             self._init_controllers()
+
             print(' * Saika is ready now.')
         except:
             traceback.print_exc(file=sys.stderr)
@@ -64,6 +66,8 @@ class SaikaApp(Flask):
     def _init_app(self):
         db.init_app(self)
         migrate.init_app(self, db)
+        cors.init_app(self)
+        socket_io.init_app(self, cors_allowed_origins='*')
         self.callback_init_app()
 
     def _init_callbacks(self):
@@ -77,6 +81,13 @@ class SaikaApp(Flask):
     def _init_controllers(self):
         controller_classes = MetaTable.get(hard_code.MI_GLOBAL, hard_code.MK_CONTROLLER_CLASSES, [])
         self.controllers = [cls(self) for cls in controller_classes]
+
+        self.sio_controllers = []
+        sio_controller_classes = MetaTable.get(hard_code.MI_GLOBAL, hard_code.MK_SIO_CONTROLLER_CLASSES, [])
+        for cls in sio_controller_classes:
+            sc = cls(**MetaTable.get(cls, hard_code.MK_OPTIONS))
+            socket_io.on_namespace(sc)
+            self.sio_controllers.append(sc)
 
     def _init_context(self):
         for name, obj in make_context().items():
