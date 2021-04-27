@@ -31,14 +31,14 @@ class SaikaApp(Flask):
     def __init__(self, **kwargs):
         super().__init__(self.__class__.__module__, **kwargs)
 
+        self.controllers = []
+        self.sio_controllers = []
+
         try:
             self._init_env()
             print(' * Saika Initializing...\n   - Version: %s' % Const.version)
             self._init_config()
             self._init_app()
-
-            self.controllers = []
-            self.sio_controllers = []
 
             self._import_modules()
             self._init_callbacks()

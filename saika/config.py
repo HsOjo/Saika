@@ -1,4 +1,6 @@
 import json
+import os
+import sys
 
 from . import hard_code
 
@@ -10,8 +12,11 @@ class Config:
     @staticmethod
     def load(path):
         global _config
-        with open(path, 'r') as io:
-            _config = json.load(io)
+        if not os.path.exists(path):
+            print('Config not exist: %s' % path, file=sys.stderr)
+        else:
+            with open(path, 'r') as io:
+                _config = json.load(io)
 
     @staticmethod
     def save(path):
