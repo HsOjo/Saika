@@ -12,11 +12,13 @@ from . import hard_code
 from .config import Config
 from .const import Const
 from .context import Context
+from .controller import WebController
 from .cors import cors
 from .database import db, migrate
 from .environ import Environ
 from .meta_table import MetaTable
-from .socket_io import socket_io
+from .socket_io import socket_io, SocketIOController
+from .sockets import sockets, SocketController
 
 
 def make_context():
@@ -31,7 +33,8 @@ class SaikaApp(Flask):
     def __init__(self, **kwargs):
         super().__init__(self.__class__.__module__, **kwargs)
 
-        self.controllers = []
+        self.web_controllers = []
+        self.socket_controllers = []
         self.sio_controllers = []
 
         try:
@@ -68,6 +71,7 @@ class SaikaApp(Flask):
         migrate.init_app(self, db)
         cors.init_app(self)
         socket_io.init_app(self, cors_allowed_origins='*')
+        sockets.init_app(self)
         self.callback_init_app()
 
     def _init_callbacks(self):
@@ -80,14 +84,20 @@ class SaikaApp(Flask):
 
     def _init_controllers(self):
         controller_classes = MetaTable.get(hard_code.MI_GLOBAL, hard_code.MK_CONTROLLER_CLASSES, [])
-        self.controllers = [cls(self) for cls in controller_classes]
-
-        self.sio_controllers = []
-        sio_controller_classes = MetaTable.get(hard_code.MI_GLOBAL, hard_code.MK_SIO_CONTROLLER_CLASSES, [])
-        for cls in sio_controller_classes:
-            sc = cls(**MetaTable.get(cls, hard_code.MK_OPTIONS))
-            socket_io.on_namespace(sc)
-            self.sio_controllers.append(sc)
+        for cls in controller_classes:
+            if issubclass(cls, WebController):
+                item = cls()
+                item.register(self)
+                self.web_controllers.append(item)
+            elif issubclass(cls, SocketController):
+                item = cls()
+                item.register(sockets)
+                self.socket_controllers.append(item)
+            elif issubclass(cls, SocketIOController):
+                options = MetaTable.get(cls, hard_code.MK_OPTIONS)
+                item = cls(namespace=options.pop('url_prefix', None))
+                socket_io.on_namespace(item)
+                self.sio_controllers.append(item)
 
     def _init_context(self):
         for name, obj in make_context().items():

@@ -4,10 +4,10 @@ import traceback
 from flask import jsonify
 
 from saika.exception import AppException, APIException
-from .controller import Controller
+from .web import WebController
 
 
-class APIController(Controller):
+class APIController(WebController):
     def callback_before_register(self):
         @self.blueprint.errorhandler(AppException)
         def convert(e: AppException):

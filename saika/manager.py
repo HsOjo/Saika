@@ -5,7 +5,7 @@ from .app import SaikaApp, make_context
 from .socket_io import socket_io
 
 
-class SocketIOServer(Server):
+class SocketServer(Server):
     def __call__(self, app, host, port, use_debugger, use_reloader,
                  threaded, processes, passthrough_errors, ssl_crt, ssl_key):
         kwargs = dict(debug=use_debugger, use_reloader=use_reloader, certfile=ssl_crt, keyfile=ssl_key)
@@ -21,6 +21,6 @@ def init_manager(app: SaikaApp, **kwargs):
     manager.add_command('db', MigrateCommand)
     manager.shell(make_context)
     if len(app.sio_controllers):
-        manager.add_command('runserver', SocketIOServer())
+        manager.add_command('runserver', SocketServer())
 
     return manager

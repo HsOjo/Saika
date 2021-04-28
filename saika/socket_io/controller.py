@@ -6,9 +6,6 @@ from saika.context import Context
 
 
 class SocketIOController(Namespace):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
     def trigger_event(self, event, *args):
         event = re.sub('[A-Z]+', lambda x: '_%s' % x.group().lower(), event)
         event = re.sub('[^a-z0-9$]', '_', event)
