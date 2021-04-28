@@ -2,9 +2,17 @@ from saika import hard_code
 from saika.meta_table import MetaTable
 
 
-def rule(rule_str):
+def rule(rule_str: str):
     def wrapper(f):
         MetaTable.set(f, hard_code.MK_RULE_STR, rule_str)
+        return f
+
+    return wrapper
+
+
+def rule_rs(rule_str: str):
+    def wrapper(f):
+        MetaTable.set(f, hard_code.MK_RULE_STR, rule_str.rstrip('/'))
         return f
 
     return wrapper
