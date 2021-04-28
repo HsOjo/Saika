@@ -7,7 +7,7 @@ from saika.context import Context
 from saika.meta_table import MetaTable
 
 
-class Controller:
+class ControllerBase:
     def __init__(self):
         name = self.__class__.__name__.replace('Controller', '')
         self._name = re.sub('[A-Z]', lambda x: '_' + x.group().lower(), name).lstrip('_')
@@ -43,7 +43,7 @@ class Controller:
         return options
 
     def _register_methods(self):
-        keeps = dir(Controller)
+        keeps = dir(ControllerBase)
         for k in dir(self):
             if k in keeps:
                 continue
@@ -58,8 +58,15 @@ class Controller:
                     f = f.__func__
                 meta = MetaTable.all(f)
                 if meta is not None:
-                    self._blueprint.add_url_rule(
-                        rule=meta[hard_code.MK_RULE_STR],
-                        methods=meta[hard_code.MK_METHODS],
-                        view_func=_f
-                    )
+                    options = dict()
+                    methods = meta.get(hard_code.MK_METHODS)
+                    if methods:
+                        options['methods'] = methods
+
+                    self._blueprint.add_url_rule(meta[hard_code.MK_RULE_STR], None, _f, **options)
+
+    def register(self, *args, **kwargs):
+        pass
+
+    def callback_before_register(self):
+        pass

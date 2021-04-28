@@ -2,10 +2,10 @@ from flask import abort, redirect, flash, url_for, send_file, send_from_director
 
 from saika import hard_code
 from saika.context import Context
-from .controller import Controller
+from .base import ControllerBase
 
 
-class WebController(Controller):
+class WebController(ControllerBase):
     def __init__(self):
         super().__init__()
 
@@ -25,6 +25,3 @@ class WebController(Controller):
     def register(self, app: Flask):
         self.callback_before_register()
         app.register_blueprint(self.blueprint, **self.options)
-
-    def callback_before_register(self):
-        pass

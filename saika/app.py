@@ -39,7 +39,7 @@ class SaikaApp(Flask):
 
         try:
             self._init_env()
-            print(' * Saika Initializing...\n   - Version: %s' % Const.version)
+            print(' * Initializing Saika-%s "%s"' % (Const.version, self.import_name))
             self._init_config()
             self._init_app()
 
@@ -47,8 +47,6 @@ class SaikaApp(Flask):
             self._init_callbacks()
             self._init_context()
             self._init_controllers()
-
-            print(' * Saika is ready now.')
         except:
             traceback.print_exc(file=sys.stderr)
 
