@@ -8,6 +8,13 @@ import traceback
 
 from flask import Flask
 
+try:
+    from gevent import monkey
+
+    monkey.patch_all()
+except ImportError:
+    pass
+
 from . import hard_code
 from .config import Config
 from .const import Const
