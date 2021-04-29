@@ -1,19 +1,24 @@
+import builtins
 import importlib
 import os
 import pkgutil
+import re
 import sys
 import traceback
 
 from flask import Flask
-from werkzeug.serving import is_running_from_reloader
 
 from . import hard_code
 from .config import Config
 from .const import Const
 from .context import Context
+from .controller import WebController
+from .cors import cors
 from .database import db, migrate
 from .environ import Environ
 from .meta_table import MetaTable
+from .socket_io import socket_io, SocketIOController
+from .sockets import sockets, SocketController
 
 
 def make_context():
@@ -27,21 +32,21 @@ def make_context():
 class SaikaApp(Flask):
     def __init__(self, **kwargs):
         super().__init__(self.__class__.__module__, **kwargs)
-        if self.debug and not is_running_from_reloader():
-            return
+
+        self.web_controllers = []
+        self.socket_controllers = []
+        self.sio_controllers = []
 
         try:
             self._init_env()
-            print(' * Saika Initializing...\n   - Version: %s' % Const.version)
+            print(' * Initializing Saika-%s "%s"' % (Const.version, self.import_name))
             self._init_config()
             self._init_app()
 
-            self.controllers = []
             self._import_modules()
             self._init_callbacks()
             self._init_context()
             self._init_controllers()
-            print(' * Saika is ready now.')
         except:
             traceback.print_exc(file=sys.stderr)
 
@@ -62,6 +67,9 @@ class SaikaApp(Flask):
     def _init_app(self):
         db.init_app(self)
         migrate.init_app(self, db)
+        cors.init_app(self)
+        socket_io.init_app(self, cors_allowed_origins='*')
+        sockets.init_app(self)
         self.callback_init_app()
 
     def _init_callbacks(self):
@@ -74,11 +82,35 @@ class SaikaApp(Flask):
 
     def _init_controllers(self):
         controller_classes = MetaTable.get(hard_code.MI_GLOBAL, hard_code.MK_CONTROLLER_CLASSES, [])
-        self.controllers = [cls(self) for cls in controller_classes]
+        for cls in controller_classes:
+            if issubclass(cls, WebController):
+                item = cls()
+                item.register(self)
+                self.web_controllers.append(item)
+            elif issubclass(cls, SocketController):
+                item = cls()
+                item.register(sockets)
+                self.socket_controllers.append(item)
+            elif issubclass(cls, SocketIOController):
+                options = MetaTable.get(cls, hard_code.MK_OPTIONS)
+                item = cls(namespace=options.pop('url_prefix', None))
+                socket_io.on_namespace(item)
+                self.sio_controllers.append(item)
 
     def _init_context(self):
         for name, obj in make_context().items():
             self.add_template_global(obj, name)
+
+        items = []
+        for key in dir(builtins):
+            item = getattr(builtins, key)
+            type_name = type(item).__name__
+            if key[0] != '_' and hasattr(item, '__name__') and (
+                    type_name == 'builtin_function_or_method' or re.match('^[a-z]+$', key)):
+                items.append(item)
+
+        for item in items:
+            self.add_template_global(item)
 
     def _import_modules(self):
         module = self.__class__.__module__

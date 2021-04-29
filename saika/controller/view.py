@@ -4,10 +4,10 @@ from flask import render_template
 
 from saika import hard_code
 from saika.meta_table import MetaTable
-from .controller import Controller
+from .web import WebController
 
 
-class ViewControlller(Controller):
+class ViewControlller(WebController):
     def assign(self, **kwargs):
         context = self.context.g_get(hard_code.GK_CONTEXT)
         if context is None:

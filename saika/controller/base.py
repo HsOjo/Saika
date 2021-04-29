@@ -1,20 +1,20 @@
 import re
 
-from flask import Blueprint, Flask, abort, redirect, flash, url_for, send_file, send_from_directory, make_response
+from flask import Blueprint
 
 from saika import hard_code
 from saika.context import Context
 from saika.meta_table import MetaTable
 
 
-class Controller:
-    def __init__(self, app):
+class ControllerBase:
+    def __init__(self):
         name = self.__class__.__name__.replace('Controller', '')
         self._name = re.sub('[A-Z]', lambda x: '_' + x.group().lower(), name).lstrip('_')
         self._import_name = self.__class__.__module__
 
         self._blueprint = Blueprint(self._name, self._import_name)
-        self._register(app)
+        self._register_methods()
 
     @property
     def blueprint(self):
@@ -33,11 +33,6 @@ class Controller:
         return Context.request
 
     @property
-    def form(self):
-        form = Context.g_get(hard_code.GK_FORM)
-        return form
-
-    @property
     def options(self):
         options = MetaTable.get(self.__class__, hard_code.MK_OPTIONS, {})  # type: dict
         return options
@@ -48,7 +43,7 @@ class Controller:
         return options
 
     def _register_methods(self):
-        keeps = dir(Controller)
+        keeps = dir(ControllerBase)
         for k in dir(self):
             if k in keeps:
                 continue
@@ -63,27 +58,15 @@ class Controller:
                     f = f.__func__
                 meta = MetaTable.all(f)
                 if meta is not None:
-                    self._blueprint.add_url_rule(
-                        rule=meta[hard_code.MK_RULE_STR],
-                        methods=meta[hard_code.MK_METHODS],
-                        view_func=_f
-                    )
+                    options = dict()
+                    methods = meta.get(hard_code.MK_METHODS)
+                    if methods:
+                        options['methods'] = methods
 
-    def _register(self, app):
-        app: Flask
-        self.callback_before_register()
-        self._register_methods()
-        self._init_flask_function()
-        app.register_blueprint(self._blueprint, **self.options)
+                    self._blueprint.add_url_rule(meta[hard_code.MK_RULE_STR], None, _f, **options)
 
-    def _init_flask_function(self):
-        self.abort = abort
-        self.redirect = redirect
-        self.flash = flash
-        self.url_for = url_for
-        self.send_file = send_file
-        self.send_from_directory = send_from_directory
-        self.make_response = make_response
+    def register(self, *args, **kwargs):
+        pass
 
     def callback_before_register(self):
         pass

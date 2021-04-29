@@ -9,3 +9,7 @@ Flask_Script
 Flask_WTF
 Flask_SQLAlchemy
 wtforms_json
+wheel
+flask_socketio==4.3.2
+Flask_Cors
+Flask_sockets

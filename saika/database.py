@@ -4,13 +4,6 @@ from sqlalchemy.orm import Session
 
 from . import hard_code
 from .config import Config
-from .meta_table import MetaTable
-
-
-def model(cls):
-    models = MetaTable.get(hard_code.MI_GLOBAL, hard_code.MK_MODEL_CLASSES, [])  # type: list
-    models.append(cls)
-    return cls
 
 
 class Database(SQLAlchemy):
