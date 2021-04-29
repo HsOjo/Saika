@@ -8,6 +8,13 @@ import traceback
 
 from flask import Flask
 
+try:
+    from gevent import monkey
+
+    monkey.patch_all()
+except ImportError:
+    pass
+
 from . import hard_code
 from .config import Config
 from .const import Const
@@ -17,8 +24,8 @@ from .cors import cors
 from .database import db, migrate
 from .environ import Environ
 from .meta_table import MetaTable
+from .socket import socket, SocketController
 from .socket_io import socket_io, SocketIOController
-from .sockets import sockets, SocketController
 
 
 def make_context():
@@ -69,7 +76,7 @@ class SaikaApp(Flask):
         migrate.init_app(self, db)
         cors.init_app(self)
         socket_io.init_app(self, cors_allowed_origins='*')
-        sockets.init_app(self)
+        socket.init_app(self)
         self.callback_init_app()
 
     def _init_callbacks(self):
@@ -85,11 +92,11 @@ class SaikaApp(Flask):
         for cls in controller_classes:
             if issubclass(cls, WebController):
                 item = cls()
-                item.register(self)
+                item.instance_register(self)
                 self.web_controllers.append(item)
             elif issubclass(cls, SocketController):
                 item = cls()
-                item.register(sockets)
+                item.instance_register(socket)
                 self.socket_controllers.append(item)
             elif issubclass(cls, SocketIOController):
                 options = MetaTable.get(cls, hard_code.MK_OPTIONS)

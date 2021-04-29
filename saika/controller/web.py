@@ -22,6 +22,6 @@ class WebController(ControllerBase):
         form = Context.g_get(hard_code.GK_FORM)
         return form
 
-    def register(self, app: Flask):
+    def instance_register(self, app: Flask):
         self.callback_before_register()
         app.register_blueprint(self.blueprint, **self.options)

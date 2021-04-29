@@ -1,3 +1,5 @@
+import base64
+
 from itsdangerous import TimedJSONWebSignatureSerializer
 
 from .environ import Environ
@@ -18,6 +20,8 @@ def obj_standard(obj, str_key=False, str_obj=False):
     this = lambda x: obj_standard(x, str_key, str_obj)
     if type(obj) in [bool, int, float, str]:
         return obj
+    elif isinstance(obj, bytes):
+        return base64.b64encode(obj).decode()
     elif isinstance(obj, list):
         return [this(i) for i in obj]
     elif isinstance(obj, dict):

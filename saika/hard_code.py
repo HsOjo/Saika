@@ -31,6 +31,7 @@ AK_VALIDATE = 'validate'
 # region G Key
 GK_CONTEXT = 'context'
 GK_FORM = 'form'
+GK_SOCKET = 'socket'
 # endregion
 
 # region Callback Key
