@@ -1,3 +1,6 @@
-from geventwebsocket.gunicorn.workers import GeventWebSocketWorker
+try:
+    from geventwebsocket.gunicorn.workers import GeventWebSocketWorker
 
-worker = GeventWebSocketWorker
+    worker = GeventWebSocketWorker
+except ImportError:
+    worker = None

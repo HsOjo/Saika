@@ -17,8 +17,8 @@ from .cors import cors
 from .database import db, migrate
 from .environ import Environ
 from .meta_table import MetaTable
-from .socket_io import socket_io, SocketIOController
 from .socket import socket, SocketController
+from .socket_io import socket_io, SocketIOController
 
 
 def make_context():
