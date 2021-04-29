@@ -5,6 +5,7 @@ Flask-Script
 Flask-SocketIO==4.3.2
 Flask-Sockets
 Flask-SQLAlchemy
+Flask-uWSGI-WebSocket
 Flask-WTF
 wtforms_json
 itsdangerous

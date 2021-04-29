@@ -9,5 +9,6 @@ from .environ import Environ
 from .exception import AppException, APIException
 from .manager import init_manager
 from .meta_table import MetaTable
+from .socket import socket, SocketController, EventSocketController
 from .socket_io import socket_io, SocketIOController
-from .sockets import sockets, SocketController, EventSocketController
+from .workers import worker

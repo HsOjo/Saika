@@ -18,7 +18,7 @@ from .database import db, migrate
 from .environ import Environ
 from .meta_table import MetaTable
 from .socket_io import socket_io, SocketIOController
-from .sockets import sockets, SocketController
+from .socket import socket, SocketController
 
 
 def make_context():
@@ -69,7 +69,7 @@ class SaikaApp(Flask):
         migrate.init_app(self, db)
         cors.init_app(self)
         socket_io.init_app(self, cors_allowed_origins='*')
-        sockets.init_app(self)
+        socket.init_app(self)
         self.callback_init_app()
 
     def _init_callbacks(self):
@@ -89,7 +89,7 @@ class SaikaApp(Flask):
                 self.web_controllers.append(item)
             elif issubclass(cls, SocketController):
                 item = cls()
-                item.instance_register(sockets)
+                item.instance_register(socket)
                 self.socket_controllers.append(item)
             elif issubclass(cls, SocketIOController):
                 options = MetaTable.get(cls, hard_code.MK_OPTIONS)
