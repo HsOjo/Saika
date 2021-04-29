@@ -1,17 +1,25 @@
 import json
 
+from flask_uwsgi_websocket import WebSocketClient
 from geventwebsocket import WebSocketError
 from geventwebsocket.websocket import WebSocket, MSG_SOCKET_DEAD
 
 from saika import hard_code, common
+from saika.environ import Environ
 from .controller import SocketController
 
 
 class EventSocketController(SocketController):
-    def handle(self, socket: WebSocket):
+    def handle(self, socket):
+        if isinstance(socket, WebSocketClient):
+            Environ.into_request_context_do(socket.environ, self._handle, socket)
+        elif isinstance(socket, WebSocket):
+            self._handle(socket)
+
+    def _handle(self, socket):
         self.context.g_set(hard_code.GK_SOCKET, socket)
         self.on_connect()
-        while not socket.closed:
+        while self._loop:
             data_str = None
             try:
                 data_str = socket.receive()
@@ -34,6 +42,15 @@ class EventSocketController(SocketController):
             except Exception as e:
                 self.on_error(e)
         self.on_disconnect()
+
+    @property
+    def _loop(self):
+        socket = self.socket
+        if isinstance(socket, WebSocket):
+            return not socket.closed
+        elif isinstance(socket, WebSocketClient):
+            return socket.connected
+        return False
 
     @property
     def socket(self):

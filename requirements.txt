@@ -9,3 +9,4 @@ Flask-uWSGI-WebSocket
 Flask-WTF
 wtforms_json
 itsdangerous
+gunicorn
