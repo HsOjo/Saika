@@ -18,11 +18,13 @@ class EventSocketController(SocketController):
                 if not data_str:
                     continue
                 data = json.loads(data_str)  # type: dict
-                event = 'on_%s' % data.pop('event')
-                if hasattr(self, event) and event not in dir(EventSocketController):
-                    getattr(self, event)(**data)
-                else:
-                    self.on_message(data)
+                if isinstance(data, dict):
+                    event = 'on_%s' % data.pop('event')
+                    if hasattr(self, event) and event not in dir(EventSocketController):
+                        kwargs = data.pop('data', {})
+                        getattr(self, event)(**kwargs)
+                        continue
+                self.on_message(data)
             except json.JSONDecodeError:
                 self.on_message(data_str)
             except WebSocketError as e:
@@ -42,7 +44,7 @@ class EventSocketController(SocketController):
         self.socket.send(json.dumps(common.obj_standard(data, True, True)))
 
     def emit(self, event: str, data: dict):
-        self.send(dict(event=event, **data))
+        self.send(dict(event=event, data=data))
 
     def disconnect(self, *args, **kwargs):
         self.socket.close(*args, **kwargs)
