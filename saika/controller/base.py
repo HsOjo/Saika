@@ -65,7 +65,7 @@ class ControllerBase:
 
                     self._blueprint.add_url_rule(meta[hard_code.MK_RULE_STR], None, _f, **options)
 
-    def register(self, *args, **kwargs):
+    def instance_register(self, *args, **kwargs):
         pass
 
     def callback_before_register(self):

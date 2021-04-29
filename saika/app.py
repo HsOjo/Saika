@@ -85,11 +85,11 @@ class SaikaApp(Flask):
         for cls in controller_classes:
             if issubclass(cls, WebController):
                 item = cls()
-                item.register(self)
+                item.instance_register(self)
                 self.web_controllers.append(item)
             elif issubclass(cls, SocketController):
                 item = cls()
-                item.register(sockets)
+                item.instance_register(sockets)
                 self.socket_controllers.append(item)
             elif issubclass(cls, SocketIOController):
                 options = MetaTable.get(cls, hard_code.MK_OPTIONS)
