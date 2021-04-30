@@ -73,8 +73,12 @@ class SaikaApp(Flask):
     def _init_app(self):
         db.init_app(self)
         migrate.init_app(self, db)
-        cors.init_app(self)
-        socket_io.init_app(self, cors_allowed_origins='*')
+        cors.init_app(self, **(Config.section('cors') or dict(
+            supports_credentials=True,
+        )))
+        socket_io.init_app(self, **(Config.section('socket_io') or dict(
+            cors_allowed_origins='*',
+        )))
         socket.init_app(self)
         self.callback_init_app()
 

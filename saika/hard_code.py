@@ -22,6 +22,8 @@ MK_FORM_VALIDATE = 'form_validate'
 # region Config Key
 CK_CORE = 'core'
 CK_DATABASE = 'database'
+CK_CORS = 'cors'
+CK_SOCKET_IO = 'socket_io'
 # endregion
 
 # region Arg Key
