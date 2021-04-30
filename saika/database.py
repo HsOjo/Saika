@@ -1,5 +1,6 @@
 from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session
 
 from . import hard_code
@@ -8,6 +9,10 @@ from .config import Config
 
 class Database(SQLAlchemy):
     session: Session
+
+    def dispose_engine(self, **kwargs):
+        engine = self.get_engine(**kwargs)  # type: Engine
+        engine.dispose()
 
 
 @Config.process

@@ -29,6 +29,7 @@ AK_VALIDATE = 'validate'
 # endregion
 
 # region G Key
+GK_KEYS = '_keys'
 GK_CONTEXT = 'context'
 GK_FORM = 'form'
 GK_SOCKET = 'socket'
