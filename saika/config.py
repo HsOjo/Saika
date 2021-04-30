@@ -26,7 +26,7 @@ class Config:
 
     @staticmethod
     def section(key):
-        cfg = _config.get(key)  # type: dict
+        cfg = _config.get(key, {})  # type: dict
         return cfg
 
     @staticmethod

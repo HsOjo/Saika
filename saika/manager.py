@@ -3,6 +3,8 @@ from flask_script import Manager, Server
 from werkzeug.serving import is_running_from_reloader
 
 from .app import SaikaApp, make_context
+from .const import Const
+from .environ import Environ
 from .socket_io import socket_io
 
 
@@ -18,8 +20,11 @@ class GEventServer(Server):
             use_reloader = app.debug
 
         if not use_reloader or is_running_from_reloader():
-            print(' * Environment: %s\n * Debug mode: %s\n * Running on http://%s:%s/ (Press CTRL+C to quit)' % (
-                app.env, 'on' if app.debug else 'off', host, port))
+            print(' * Serving Saika "%s"' % (Environ.app.import_name))
+            print('   - Saika Version: %s' % Const.version)
+            print(' * Environment: %s' % app.env)
+            print(' * Debug mode: %s' % ('on' if app.debug else 'off'))
+            print(' * Running on http://%s:%s/ (Press CTRL+C to quit)' % (host, port))
 
         socket_io.server.eio.async_mode = 'gevent'
         socket_io.run(app, host, port, log_output=True, **kwargs)
