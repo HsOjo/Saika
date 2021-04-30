@@ -46,7 +46,6 @@ class SaikaApp(Flask):
 
         try:
             self._init_env()
-            print(' * Initializing Saika-%s "%s"' % (Const.version, self.import_name))
             self._init_config()
             self._init_app()
 
