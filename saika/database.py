@@ -1,5 +1,5 @@
 from flask_migrate import Migrate
-from flask_sqlalchemy import SQLAlchemy
+from flask_sqlalchemy import SQLAlchemy, BaseQuery
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session
 
@@ -13,6 +13,21 @@ class Database(SQLAlchemy):
     def dispose_engine(self, **kwargs):
         engine = self.get_engine(**kwargs)  # type: Engine
         engine.dispose()
+
+    @staticmethod
+    def query(model):
+        query = getattr(model, 'query')  # type: BaseQuery
+        return query
+
+    def add_instance(self, instance, commit=True):
+        self.session.add(instance)
+        if commit:
+            self.session.commit()
+
+    def delete_instance(self, instance, commit=True):
+        self.session.delete(instance)
+        if commit:
+            self.session.commit()
 
 
 @Config.process
