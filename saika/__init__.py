@@ -1,6 +1,8 @@
+from . import hard_code
 from .workers import worker, gevent_patch
 
-gevent_patch()
+if not __import__('os').getenv(hard_code.SAIKA_DEBUG):
+    gevent_patch()
 
 from .app import SaikaApp
 from .config import Config

@@ -1,5 +1,6 @@
 import json
 
+from saika import common
 from .exception import AppException
 
 
@@ -9,15 +10,9 @@ class APIException(AppException):
         super().__init__(*args, **kwargs)
 
     def get_body(self, environ=None):
-        try:
-            return json.dumps(dict(
+        return json.dumps(
+            common.obj_standard(dict(
                 code=self.error_code,
                 msg=self.msg,
                 data=self.data,
-            ))
-        except TypeError:
-            return json.dumps(dict(
-                code=self.error_code,
-                msg=self.msg,
-                data='%a' % self.data,
-            ))
+            ), True, True))

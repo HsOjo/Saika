@@ -2,6 +2,7 @@ from flask import abort, redirect, flash, url_for, send_file, send_from_director
 
 from saika import hard_code
 from saika.context import Context
+from saika.form import Form
 from .base import ControllerBase
 
 
@@ -19,7 +20,7 @@ class WebController(ControllerBase):
 
     @property
     def form(self):
-        form = Context.g_get(hard_code.GK_FORM)
+        form = Context.g_get(hard_code.GK_FORM)  # type: Form
         return form
 
     def instance_register(self, app: Flask):

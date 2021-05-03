@@ -1,3 +1,5 @@
+SAIKA_DEBUG = 'SAIKA_DEBUG'
+
 # region Meta Item
 MI_GLOBAL = 'global'
 MI_CALLBACK = 'callback'

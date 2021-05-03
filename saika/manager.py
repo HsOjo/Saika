@@ -1,3 +1,5 @@
+import sys
+
 from flask_migrate import MigrateCommand
 from flask_script import Manager, Server
 from werkzeug.serving import is_running_from_reloader
@@ -34,6 +36,9 @@ def init_manager(app: SaikaApp, **kwargs):
     manager = Manager(app, **kwargs)
     manager.add_command('db', MigrateCommand)
     manager.shell(app.make_context)
-    manager.add_command('runserver', GEventServer())
+    if not Environ.debug:
+        manager.add_command('runserver', GEventServer())
+    else:
+        print(' * Saika Debug: Websocket is disabled now.', file=sys.stderr)
 
     return manager
