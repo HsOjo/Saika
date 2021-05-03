@@ -1,6 +1,8 @@
 import os
 import sys
 
+worker = None
+
 try:
     from geventwebsocket.gunicorn.workers import GeventWebSocketWorker
     from gunicorn.workers.base_async import AsyncWorker
@@ -18,4 +20,13 @@ try:
 
     worker = SaikaWorker
 except ImportError:
-    worker = None
+    pass
+
+
+def gevent_patch():
+    try:
+        from gevent import monkey
+
+        monkey.patch_all()
+    except ImportError:
+        pass

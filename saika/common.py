@@ -18,7 +18,7 @@ def obj_decrypt(obj_str):
 
 def obj_standard(obj, str_key=False, str_obj=False):
     this = lambda x: obj_standard(x, str_key, str_obj)
-    if type(obj) in [bool, int, float, str]:
+    if type(obj) in [bool, int, float, str, type(None)]:
         return obj
     elif isinstance(obj, bytes):
         return base64.b64encode(obj).decode()

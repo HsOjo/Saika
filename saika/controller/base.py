@@ -4,6 +4,7 @@ from flask import Blueprint
 
 from saika import hard_code
 from saika.context import Context
+from saika.environ import Environ
 from saika.meta_table import MetaTable
 
 
@@ -43,6 +44,9 @@ class ControllerBase:
         return options
 
     def _register_methods(self):
+        if Environ.debug:
+            print(' * Init %s (%s): %a' % (self._import_name, self._name, self.options))
+
         keeps = dir(ControllerBase)
         for k in dir(self):
             if k in keeps:
@@ -64,6 +68,11 @@ class ControllerBase:
                         options['methods'] = methods
 
                     self._blueprint.add_url_rule(meta[hard_code.MK_RULE_STR], None, _f, **options)
+                    if Environ.debug:
+                        name = _f.__name__
+                        if hasattr(_f, '__qualname__'):
+                            name = _f.__qualname__
+                        print('   - %s: %a' % (name, options))
 
     def instance_register(self, *args, **kwargs):
         pass

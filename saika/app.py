@@ -8,13 +8,6 @@ import traceback
 
 from flask import Flask
 
-try:
-    from gevent import monkey
-
-    monkey.patch_all()
-except ImportError:
-    pass
-
 from . import hard_code
 from .config import Config
 from .const import Const
@@ -26,14 +19,6 @@ from .environ import Environ
 from .meta_table import MetaTable
 from .socket import socket, SocketController
 from .socket_io import socket_io, SocketIOController
-
-
-def make_context():
-    context = dict(Config=Config, Const=Const, Context=Context, db=db, Environ=Environ, MetaTable=MetaTable)
-    classes = MetaTable.get(hard_code.MI_GLOBAL, hard_code.MK_MODEL_CLASSES, [])
-    for cls in classes:
-        context[cls.__name__] = cls
-    return context
 
 
 class SaikaApp(Flask):
@@ -61,6 +46,7 @@ class SaikaApp(Flask):
             raise Exception('SaikaApp was created.')
 
         Environ.app = self
+        Environ.debug = os.getenv(hard_code.SAIKA_DEBUG)
         Environ.program_path = os.path.join(self.root_path, '..')
         Environ.config_path = os.path.join(Environ.program_path, Const.config_file)
         Environ.data_path = os.path.join(Environ.program_path, Const.data_dir)
@@ -108,7 +94,7 @@ class SaikaApp(Flask):
                 self.sio_controllers.append(item)
 
     def _init_context(self):
-        for name, obj in make_context().items():
+        for name, obj in self.make_context().items():
             self.add_template_global(obj, name)
 
         items = []
@@ -131,3 +117,11 @@ class SaikaApp(Flask):
 
     def callback_init_app(self):
         pass
+
+    @staticmethod
+    def make_context():
+        context = dict(Config=Config, Const=Const, Context=Context, db=db, Environ=Environ, MetaTable=MetaTable)
+        classes = MetaTable.get(hard_code.MI_GLOBAL, hard_code.MK_MODEL_CLASSES, [])
+        for cls in classes:
+            context[cls.__name__] = cls
+        return context
