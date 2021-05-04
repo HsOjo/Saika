@@ -1,5 +1,6 @@
 import re
 
+import click
 from flask import Blueprint
 
 from saika import hard_code
@@ -45,7 +46,7 @@ class ControllerBase:
 
     def _register_methods(self):
         if Environ.debug:
-            print(' * Init %s (%s): %a' % (self._import_name, self._name, self.options))
+            click.echo(' * Init %s (%s): %a' % (self._import_name, self._name, self.options))
 
         keeps = dir(ControllerBase)
         for k in dir(self):
@@ -72,7 +73,7 @@ class ControllerBase:
                         name = _f.__name__
                         if hasattr(_f, '__qualname__'):
                             name = _f.__qualname__
-                        print('   - %s: %a' % (name, options))
+                        click.echo('   - %s: %a' % (name, options))
 
     def instance_register(self, *args, **kwargs):
         pass

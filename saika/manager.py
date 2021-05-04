@@ -1,5 +1,4 @@
-import sys
-
+import click
 from flask_migrate import MigrateCommand
 from flask_script import Manager
 
@@ -15,6 +14,6 @@ def init_manager(app: SaikaApp, **kwargs):
     if not Environ.debug:
         manager.add_command('runserver', GEventServer())
     else:
-        print(' * Saika Debug: Websocket is disabled now.', file=sys.stderr)
+        click.secho(' * Saika Debug: Websocket is disabled now.', fg="red")
 
     return manager
