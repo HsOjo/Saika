@@ -1,4 +1,5 @@
 from saika import hard_code
+from saika.environ import Environ
 from saika.meta_table import MetaTable
 
 
@@ -18,11 +19,17 @@ def rule_rs(rule_str: str):
     return wrapper
 
 
-def controller(url_prefix, template_folder=None, static_folder=None, **options):
+def controller(url_prefix=None, template_folder=None, static_folder=None, **options):
     opts = locals().copy()
     opts.update(opts.pop('options'))
 
     def wrapper(cls):
+        nonlocal url_prefix
+        if url_prefix is None:
+            module = cls.__module__  # type: str
+            module = module.lstrip(Environ.app.__module__)
+            opts['url_prefix'] = module.replace('.', '/')
+
         controllers = MetaTable.get(hard_code.MI_GLOBAL, hard_code.MK_CONTROLLER_CLASSES, [])  # type: list
         controllers.append(cls)
         MetaTable.set(cls, hard_code.MK_OPTIONS, opts)
