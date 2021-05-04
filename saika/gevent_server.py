@@ -35,12 +35,14 @@ class GEventServer(Server):
         def print_log(resp: Response):
             req = Context.request
             color = 'yellow' if resp.status_code != 200 else 'grey'
-            print('%(remote_addr)s - - [%(time)s] "%(method)s %(path)s %(protocol)s" %(status_code)s' % dict(
+            print('%(remote_addr)s - - [%(time)s] "%(request)s" %(status_code)s' % dict(
                 remote_addr=req.remote_addr,
                 time=time.strftime('%d/%b/%Y %H:%M:%S'),
-                method=req.method,
-                path=colored(req.path, color),
-                protocol=req.environ.get('SERVER_PROTOCOL'),
+                request=colored('%(method)s %(path)s %(protocol)s' % dict(
+                    method=req.method,
+                    path=req.path,
+                    protocol=req.environ.get('SERVER_PROTOCOL'),
+                ), color),
                 status_code=resp.status_code,
             ), file=sys.stderr)
             return resp
