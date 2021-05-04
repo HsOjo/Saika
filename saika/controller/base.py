@@ -15,6 +15,8 @@ class ControllerBase:
         self._name = re.sub('[A-Z]', lambda x: '_' + x.group().lower(), name).lstrip('_')
         self._import_name = self.__class__.__module__
 
+        self.view_functions = []
+
         self._blueprint = Blueprint(self._name, self._import_name)
         self._register_methods()
 
@@ -69,6 +71,7 @@ class ControllerBase:
                         options['methods'] = methods
 
                     self._blueprint.add_url_rule(meta[hard_code.MK_RULE_STR], None, _f, **options)
+                    self.view_functions.append(f)
                     if Environ.debug:
                         name = _f.__name__
                         if hasattr(_f, '__qualname__'):
