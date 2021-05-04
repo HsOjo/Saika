@@ -1,6 +1,7 @@
 import json
 import os
-import sys
+
+import click
 
 from . import hard_code
 
@@ -13,7 +14,7 @@ class Config:
     def load(path):
         global _config
         if not os.path.exists(path):
-            print('Config not exist: %s' % path, file=sys.stderr)
+            click.secho(' * Config not exist: %s' % path, err=True)
         else:
             with open(path, 'r') as io:
                 _config = json.load(io)

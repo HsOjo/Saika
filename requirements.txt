@@ -8,3 +8,4 @@ Flask-SQLAlchemy
 Flask-WTF
 wtforms_json
 itsdangerous
+termcolor
