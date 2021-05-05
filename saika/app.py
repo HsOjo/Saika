@@ -46,7 +46,7 @@ class SaikaApp(Flask):
             raise Exception('SaikaApp was created.')
 
         Environ.app = self
-        Environ.debug = os.getenv(hard_code.SAIKA_DEBUG)
+        Environ.debug = bool(os.getenv(hard_code.SAIKA_DEBUG))
         Environ.program_path = os.path.join(self.root_path, '..')
         Environ.config_path = os.path.join(Environ.program_path, Const.config_file)
         Environ.data_path = os.path.join(Environ.program_path, Const.data_dir)
