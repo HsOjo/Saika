@@ -2,6 +2,7 @@ import os
 import sys
 
 worker = None
+fork_killer = True
 
 try:
     from geventwebsocket.gunicorn.workers import GeventWebSocketWorker
@@ -11,11 +12,12 @@ try:
     class SaikaWorker(GeventWebSocketWorker):
         def notify(self):
             super(AsyncWorker, self).notify()
-            # Fix fork child process from self.
-            ppid = os.getppid()
-            if ppid not in [self.ppid, self.pid]:
-                self.log.info("Parent changed, shutting down: %s", self)
-                sys.exit(0)
+            if fork_killer:
+                # Fix fork child process from self.
+                ppid = os.getppid()
+                if ppid not in [self.ppid, self.pid]:
+                    self.log.info("Parent changed, shutting down: %s", self)
+                    sys.exit(0)
 
 
     worker = SaikaWorker
@@ -30,3 +32,9 @@ def gevent_patch():
         monkey.patch_all()
     except ImportError:
         pass
+
+
+def set_fork_killer(enable=True):
+    """Attention: Must exit fork process..."""
+    global fork_killer
+    fork_killer = enable

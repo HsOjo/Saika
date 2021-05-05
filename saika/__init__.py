@@ -1,5 +1,5 @@
 from . import hard_code
-from .workers import worker, gevent_patch
+from .workers import worker, gevent_patch, set_fork_killer
 
 if not __import__('os').getenv(hard_code.SAIKA_DEBUG):
     gevent_patch()
@@ -11,6 +11,7 @@ from .context import Context
 from .controller import WebController, APIController, ViewControlller
 from .cors import cors
 from .database import db, migrate
+from .form import set_form_validate_default
 from .environ import Environ
 from .exception import AppException, APIException
 from .manager import init_manager

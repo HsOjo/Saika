@@ -10,7 +10,7 @@ def simple_choices(obj):
     return obj
 
 
-def set_default_validate(enable=AUTO):
+def set_form_validate_default(enable=AUTO):
     from saika import hard_code
     from saika.meta_table import MetaTable
     MetaTable.set(hard_code.MI_GLOBAL, hard_code.MK_FORM_VALIDATE, enable)
