@@ -1,8 +1,8 @@
-from flask import Flask
+import os
 
 
 class Environ:
-    app: Flask = None
+    app = None
     debug: bool
     program_path: str
     config_path: str
@@ -17,3 +17,7 @@ class Environ:
     def into_request_context_do(environ, f, *args, **kwargs):
         with Environ.app.request_context(environ):
             return f(*args, **kwargs)
+
+    @staticmethod
+    def is_gunicorn():
+        return "gunicorn" in os.environ.get("SERVER_SOFTWARE", "")

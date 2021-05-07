@@ -3,9 +3,11 @@ import importlib
 import os
 import pkgutil
 import re
+import signal
 import sys
 import traceback
 
+import click
 from flask import Flask
 
 from . import hard_code
@@ -16,14 +18,19 @@ from .controller import WebController
 from .cors import cors
 from .database import db, migrate
 from .environ import Environ
+from .form import set_form_validate_default
 from .meta_table import MetaTable
 from .socket import socket, SocketController
 from .socket_io import socket_io, SocketIOController
+from .workers import set_fork_killer
 
 
 class SaikaApp(Flask):
-    def __init__(self, **kwargs):
+    def __init__(self, import_modules=True, **kwargs):
         super().__init__(self.__class__.__module__, **kwargs)
+
+        self.set_form_validate_default = set_form_validate_default
+        self.set_fork_killer = set_fork_killer
 
         self.web_controllers = []
         self.socket_controllers = []
@@ -34,7 +41,8 @@ class SaikaApp(Flask):
             self._init_config()
             self._init_app()
 
-            self._import_modules()
+            if import_modules:
+                self._import_modules()
             self._init_callbacks()
             self._init_context()
             self._init_controllers()
@@ -125,3 +133,10 @@ class SaikaApp(Flask):
         for cls in classes:
             context[cls.__name__] = cls
         return context
+
+    @staticmethod
+    def reload():
+        if Environ.is_gunicorn():
+            os.kill(os.getppid(), signal.SIGHUP)
+        else:
+            click.secho('App Reload: Support reload in gunicorn only.', err=True)
