@@ -3,9 +3,11 @@ import importlib
 import os
 import pkgutil
 import re
+import signal
 import sys
 import traceback
 
+import click
 from flask import Flask
 
 from . import hard_code
@@ -131,3 +133,10 @@ class SaikaApp(Flask):
         for cls in classes:
             context[cls.__name__] = cls
         return context
+
+    @staticmethod
+    def reload():
+        if Environ.is_gunicorn():
+            os.kill(os.getppid(), signal.SIGHUP)
+        else:
+            click.secho('App Reload: Support reload in gunicorn only.', err=True)
