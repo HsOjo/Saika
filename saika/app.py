@@ -7,7 +7,6 @@ import signal
 import sys
 import traceback
 
-import click
 from flask import Flask
 
 from . import hard_code
@@ -26,8 +25,13 @@ from .workers import set_fork_killer
 
 
 class SaikaApp(Flask):
-    def __init__(self, import_modules=True, **kwargs):
-        super().__init__(self.__class__.__module__, **kwargs)
+    def __init__(self, import_name=None, import_modules=True, **kwargs):
+        if import_name is None:
+            if self.__class__ is SaikaApp:
+                raise Exception('Must set import_name.')
+            import_name = self.__class__.__module__
+
+        super().__init__(import_name, **kwargs)
 
         self.set_form_validate_default = set_form_validate_default
         self.set_fork_killer = set_fork_killer
@@ -55,12 +59,21 @@ class SaikaApp(Flask):
 
         Environ.app = self
         Environ.debug = bool(os.getenv(hard_code.SAIKA_DEBUG))
-        Environ.program_path = os.path.join(self.root_path, '..')
+
+        app_path = sys.modules[self.import_name].__file__
+        if os.path.exists(app_path):
+            app_dir = os.path.dirname(app_path)
+            if '__init__' in os.path.basename(app_path):
+                Environ.program_path = os.path.join(app_dir, '..')
+            else:
+                Environ.program_path = app_dir
+        else:
+            Environ.program_path = self.root_path
+
         Environ.config_path = os.path.join(Environ.program_path, Const.config_file)
         Environ.data_path = os.path.join(Environ.program_path, Const.data_dir)
 
     def _init_config(self):
-        Config.load(Environ.config_path)
         cfg = Config.merge()
         self.config.from_mapping(cfg)
 
@@ -134,9 +147,8 @@ class SaikaApp(Flask):
             context[cls.__name__] = cls
         return context
 
-    @staticmethod
-    def reload():
+    def reload(self):
         if Environ.is_gunicorn():
             os.kill(os.getppid(), signal.SIGHUP)
         else:
-            click.secho('App Reload: Support reload in gunicorn only.', err=True)
+            self.logger.warning(' * App Reload: Support reload in gunicorn only.')
