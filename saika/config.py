@@ -4,15 +4,30 @@ import os
 import click
 
 from . import hard_code
+from .environ import Environ
 
 _config = {}
 _processes = []
+_config_mtime = 0
+
+
+def check_and_reload(f):
+    def wrapper(*args, **kwargs):
+        global _config_mtime
+        mtime = os.path.getmtime(Environ.config_path)
+        if _config_mtime != mtime:
+            Config.load()
+            _config_mtime = mtime
+        return f(*args, **kwargs)
+
+    return wrapper
 
 
 class Config:
     @staticmethod
-    def load(path):
+    def load():
         global _config
+        path = Environ.config_path
         if not os.path.exists(path):
             click.secho(' * Config not exist: %s' % path, err=True)
         else:
@@ -26,15 +41,18 @@ class Config:
             io.write(cfg_str)
 
     @staticmethod
+    @check_and_reload
     def section(key):
         cfg = _config.get(key, {})  # type: dict
         return cfg
 
     @staticmethod
+    @check_and_reload
     def all():
         return _config
 
     @staticmethod
+    @check_and_reload
     def merge():
         config = {}
 
