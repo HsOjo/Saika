@@ -1,6 +1,5 @@
 import re
 
-import click
 from flask import Blueprint
 
 from saika import hard_code
@@ -48,7 +47,7 @@ class ControllerBase:
 
     def _register_methods(self):
         if Environ.debug:
-            click.echo(' * Init %s (%s): %a' % (self._import_name, self._name, self.options))
+            Environ.app.logger.debug(' * Init %s (%s): %a' % (self._import_name, self._name, self.options))
 
         keeps = dir(ControllerBase)
         for k in dir(self):
@@ -72,11 +71,12 @@ class ControllerBase:
 
                     self._blueprint.add_url_rule(meta[hard_code.MK_RULE_STR], None, _f, **options)
                     self.view_functions.append(f)
+
                     if Environ.debug:
                         name = _f.__name__
                         if hasattr(_f, '__qualname__'):
                             name = _f.__qualname__
-                        click.echo('   - %s: %a' % (name, options))
+                        Environ.app.logger.debug('   - %s: %a' % (name, options))
 
     def instance_register(self, *args, **kwargs):
         pass

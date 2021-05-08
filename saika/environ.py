@@ -1,8 +1,10 @@
 import os
 
+import saika
+
 
 class Environ:
-    app = None
+    app = None  # type: saika.SaikaApp
     debug: bool
     program_path: str
     config_path: str

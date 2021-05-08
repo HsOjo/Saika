@@ -1,8 +1,6 @@
 import json
 import os
 
-import click
-
 from . import hard_code
 from .environ import Environ
 
@@ -29,7 +27,7 @@ class Config:
         global _config
         path = Environ.config_path
         if not os.path.exists(path):
-            click.secho(' * Config not exist: %s' % path, err=True)
+            Environ.app.logger.warning(' * Config not exist: %s' % path)
         else:
             with open(path, 'r') as io:
                 _config = json.load(io)
