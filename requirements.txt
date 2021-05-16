@@ -1,6 +1,6 @@
-Flask
+Flask==1.1.4
 Flask-Cors
-Flask-Migrate
+Flask-Migrate==2.7.0
 Flask-Script
 Flask-SocketIO==4.3.2
 Flask-Sockets
