@@ -9,6 +9,14 @@ class Form(FlaskForm):
     data: dict
     errors: dict
 
+    def inject_obj_data(self, obj):
+        for k in self.data:
+            value = getattr(obj, k, None)
+            if value is not None:
+                field = getattr(self, k, None)
+                if hasattr(field, 'data'):
+                    field.data = value
+
 
 class ArgsForm(Form):
     def __init__(self, **kwargs):
