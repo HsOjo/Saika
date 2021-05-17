@@ -25,7 +25,7 @@ def controller(url_prefix=None, template_folder=None, static_folder=None, **opti
 
     def wrapper(cls):
         nonlocal url_prefix
-        if url_prefix is None:
+        if url_prefix is None or cls is url_prefix:
             module = cls.__module__  # type: str
             module = module.lstrip(Environ.app.__module__)
             opts['url_prefix'] = module.replace('.', '/')
@@ -34,6 +34,9 @@ def controller(url_prefix=None, template_folder=None, static_folder=None, **opti
         controllers.append(cls)
         MetaTable.set(cls, hard_code.MK_OPTIONS, opts)
         return cls
+
+    if type(url_prefix) is type:
+        return wrapper(url_prefix)
 
     return wrapper
 

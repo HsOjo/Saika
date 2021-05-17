@@ -13,6 +13,6 @@ def init_manager(app: SaikaApp, **kwargs):
     if not Environ.debug:
         manager.add_command('runserver', GEventServer())
     elif not Environ.is_gunicorn():
-        Environ.app.logger.warning(' * Saika Debug: Websocket is disabled now.', fg="red")
+        Environ.app.logger.warning(' * Saika Debug: Websocket is disabled now.')
 
     return manager
