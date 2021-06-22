@@ -1,4 +1,6 @@
-_mt = {}
+from typing import Dict
+
+_mt = {}  # type: Dict[str, dict]
 
 
 class MetaTable:
