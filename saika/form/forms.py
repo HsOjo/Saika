@@ -44,7 +44,7 @@ class Form(FlaskForm):
                     break
 
             fields[key] = dict(
-                name=field.label.text,
+                label=field.label.text,
                 type=types_mapping.get(type(field), str),
                 default=field.default,
                 description=field.description,

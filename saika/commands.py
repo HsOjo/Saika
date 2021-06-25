@@ -1,4 +1,5 @@
 import json
+import re
 
 from . import hard_code, common
 from .app import SaikaApp
@@ -13,12 +14,12 @@ def register(manager):
 
         validate_default = MetaTable.get(hard_code.MI_GLOBAL, hard_code.MK_FORM_VALIDATE)
 
-        docs = []
+        docs = {}
         for controller in app.web_controllers:
             doc = MetaTable.get(controller.__class__, hard_code.MK_DOCUMENT, dict(name=controller.name)).copy()
             opts = controller.options
 
-            api_doc = []
+            api_doc = {}
             for func in controller.view_functions:
                 metas = MetaTable.all(func)
 
@@ -46,10 +47,13 @@ def register(manager):
                     if form_cls:
                         form = form_cls()
                         item.update(validate=validate, form=form.dump_fields(), form_type=form.type)
-                    api_doc.append(item)
 
-            doc['api'] = api_doc
-            docs.append(doc)
+                    item_id = re.sub(r'[^A-Z]', '_', path.upper()).strip('_')
+                    item_id = re.sub(r'_+', '_', item_id)
+                    api_doc[item_id] = item
+
+            doc['function'] = api_doc
+            docs[controller.name] = doc
 
         docs = common.obj_standard(docs, True, True, True)
         docs_json = json.dumps(docs, indent=2, ensure_ascii=False)
