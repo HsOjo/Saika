@@ -58,7 +58,7 @@ def register(manager):
         docs = common.obj_standard(docs, True, True, True)
         docs_json = json.dumps(docs, indent=2, ensure_ascii=False)
 
-        return docs_json
+        print(docs_json)
 
     docgen.__doc__ = 'Generate API document JSON Data.'
     manager.command(docgen)
