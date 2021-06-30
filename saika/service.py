@@ -37,3 +37,17 @@ class Service:
     def delete(self, id, **kwargs):
         item = self.item(id)
         db.delete_instance(item)
+
+    def delete_multiple(self, ids, callback_excs=None, **kwargs):
+        excs = {}
+
+        for id in ids:
+            try:
+                self.delete(id, **kwargs)
+            except Exception as e:
+                excs[id] = e
+
+        if callback_excs:
+            callback_excs(excs)
+
+        return not len(excs)
