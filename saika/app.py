@@ -6,6 +6,7 @@ import re
 import signal
 import sys
 import traceback
+from typing import List
 
 from flask import Flask
 
@@ -36,9 +37,9 @@ class SaikaApp(Flask):
         self.set_form_validate_default = set_form_validate_default
         self.set_fork_killer = set_fork_killer
 
-        self.web_controllers = []
-        self.socket_controllers = []
-        self.sio_controllers = []
+        self.web_controllers = []  # type: List[WebController]
+        self.socket_controllers = []  # type: List[SocketController]
+        self.sio_controllers = []  # type: List[SocketIOController]
 
         try:
             self._init_env()
@@ -110,7 +111,7 @@ class SaikaApp(Flask):
                 self.socket_controllers.append(item)
             elif issubclass(cls, SocketIOController):
                 options = MetaTable.get(cls, hard_code.MK_OPTIONS)
-                item = cls(namespace=options.pop('url_prefix', None))
+                item = cls(namespace=options.pop(hard_code.MK_URL_PREFIX, None))
                 socket_io.on_namespace(item)
                 self.sio_controllers.append(item)
 

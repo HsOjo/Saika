@@ -1,4 +1,5 @@
 import base64
+import re
 
 from itsdangerous import TimedJSONWebSignatureSerializer
 
@@ -16,15 +17,31 @@ def obj_decrypt(obj_str):
         return None
 
 
-def obj_standard(obj, str_key=False, str_obj=False):
-    this = lambda x: obj_standard(x, str_key, str_obj)
+def obj_standard(obj, str_key=False, str_obj=False, str_type=False):
+    kwargs = locals().copy()
+    kwargs.pop('obj')
+
+    this = lambda x: obj_standard(x, **kwargs)
     if type(obj) in [bool, int, float, str, type(None)]:
         return obj
     elif isinstance(obj, bytes):
         return base64.b64encode(obj).decode()
-    elif isinstance(obj, list):
+    elif isinstance(obj, list) or isinstance(obj, tuple):
         return [this(i) for i in obj]
     elif isinstance(obj, dict):
         return {str(k) if str_key else this(k): this(v) for k, v in obj.items()}
+    elif isinstance(obj, type) and str_type:
+        return obj.__name__
     else:
         return str(obj) if str_obj else obj
+
+
+def rule_to_rest(rule_str):
+    path = rule_str  # type: str
+    args = {}
+    args_match = re.findall('(<(.+?):(.+?)>)', rule_str)
+    for [match, type_, key] in args_match:
+        path = path.replace(match, ':%s' % key)
+        args[key] = dict(type=type_)
+
+    return path, args

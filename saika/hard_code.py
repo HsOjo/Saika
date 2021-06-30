@@ -12,9 +12,14 @@ MK_CONTROLLER_CLASSES = 'controller_classes'
 MK_MODEL_CLASSES = 'model_classes'
 # endregion
 
+# region Controller Key
+MK_URL_PREFIX = 'url_prefix'
+# endregion
+
 # region Function Key
 MK_RULE_STR = 'rule_str'
 MK_METHODS = 'methods'
+MK_DOCUMENT = 'document'
 MK_OPTIONS = 'options'
 MK_FORM_CLASS = 'form_class'
 MK_FORM_ARGS = 'form_args'

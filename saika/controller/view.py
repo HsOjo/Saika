@@ -19,7 +19,7 @@ class ViewControlller(WebController):
         if template is None:
             view_function = self.context.get_view_function()
 
-            url_prefix = self.options.get('url_prefix').strip('/')  # type: str
+            url_prefix = self.options.get(hard_code.MK_URL_PREFIX).strip('/')  # type: str
             rule_str = MetaTable.get(view_function, hard_code.MK_RULE_STR).strip('/')  # type: str
 
             if not url_prefix:
