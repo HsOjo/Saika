@@ -45,7 +45,7 @@ class Form(FlaskForm):
 
             fields[key] = dict(
                 label=field.label.text,
-                type=types_mapping.get(type(field), str),
+                type=types_mapping.get(type(field), object),
                 default=field.default,
                 description=field.description,
                 required=required,
