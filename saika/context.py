@@ -31,8 +31,10 @@ class Context:
         return r
 
     @staticmethod
-    def get_view_function():
-        f = current_app.view_functions.get(request.endpoint)
+    def get_view_function(endpoint=None):
+        if endpoint is None:
+            endpoint = request.endpoint
+        f = current_app.view_functions.get(endpoint)
         if hasattr(f, '__func__'):
             f = f.__func__
 
