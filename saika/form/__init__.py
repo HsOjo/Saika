@@ -1,4 +1,4 @@
-from .forms import Form, ArgsForm, JSONForm
+from .forms import Form, ArgsForm, JSONForm, ViewArgsForm
 from .process import FormException, AUTO
 
 

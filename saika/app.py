@@ -72,7 +72,7 @@ class SaikaApp(Flask):
             Environ.program_path = self.root_path
 
         Environ.config_path = os.path.join(Environ.program_path, Const.config_file)
-        Environ.data_path = os.path.join(Environ.program_path, Const.data_dir)
+        Environ.data_path = os.path.abspath(os.path.join(Environ.program_path, Const.data_dir))
 
     def _init_config(self):
         cfg = Config.merge()

@@ -1,5 +1,5 @@
 class Const:
-    version = '0.1.4'
+    version = '0.1.5'
 
     config_file = 'config.json'
     data_dir = 'data'

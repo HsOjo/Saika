@@ -42,6 +42,8 @@ GK_KEYS = '_keys'
 GK_CONTEXT = 'context'
 GK_FORM = 'form'
 GK_SOCKET = 'socket'
+GK_RESPONSE_CODE = 'resp_code'
+GK_RESPONSE_MSG = 'resp_msg'
 # endregion
 
 # region Callback Key
