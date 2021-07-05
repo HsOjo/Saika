@@ -1,6 +1,6 @@
 from flask_wtf import FlaskForm
 from werkzeug.datastructures import MultiDict
-from wtforms import StringField, IntegerField, FieldList, BooleanField, FloatField, FormField
+from wtforms import StringField, IntegerField, FieldList, BooleanField, FloatField, FormField, SelectField
 from wtforms_json import flatten_json
 
 from saika.context import Context
@@ -45,7 +45,7 @@ class Form(FlaskForm):
 
             data = dict(
                 label=f.label.text,
-                type=types_mapping.get(type(f), object),
+                type=types_mapping.get(type(f), str),
                 default=f.default,
                 description=f.description,
                 required=required,
@@ -55,6 +55,8 @@ class Form(FlaskForm):
                 data.update(form=f.form.dump_fields())
             elif isinstance(f, FieldList):
                 data.update(item=dump_field(f.unbound_field.bind(f, f.name)))
+            elif isinstance(f, SelectField):
+                data.update(type=f.coerce)
 
             return data
 
