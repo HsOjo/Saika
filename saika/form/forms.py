@@ -36,20 +36,30 @@ class Form(FlaskForm):
             FormField: dict,
         }
 
-        for key, field in self._fields.items():
+        def dump_field(f):
             required = False
-            for i in field.validators:
+            for i in f.validators:
                 if hasattr(i, 'field_flags') and 'required' in i.field_flags:
                     required = True
                     break
 
-            fields[key] = dict(
-                label=field.label.text,
-                type=types_mapping.get(type(field), object),
-                default=field.default,
-                description=field.description,
+            data = dict(
+                label=f.label.text,
+                type=types_mapping.get(type(f), object),
+                default=f.default,
+                description=f.description,
                 required=required,
             )
+
+            if isinstance(f, FormField):
+                data.update(form=f.form.dump_fields())
+            elif isinstance(f, FieldList):
+                data.update(item=dump_field(f.unbound_field.bind(f, f.name)))
+
+            return data
+
+        for key, field in self._fields.items():
+            fields[key] = dump_field(field)
 
         return fields
 
