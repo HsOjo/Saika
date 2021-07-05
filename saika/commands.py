@@ -50,6 +50,9 @@ def register(manager):
 
                     item_id = re.sub(r'[^A-Z]', '_', path.upper()).strip('_')
                     item_id = re.sub(r'_+', '_', item_id)
+                    if len(methods) > 1:
+                        item_id += ('_%s' % method).upper()
+
                     api_doc[item_id] = item
 
             doc['function'] = api_doc
