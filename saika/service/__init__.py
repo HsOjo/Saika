@@ -1,4 +1,5 @@
-from .database import db
+from saika.database import db
+from .forms import FieldOperateForm
 
 
 class Service:
@@ -38,16 +39,8 @@ class Service:
         item = self.item(id)
         db.delete_instance(item)
 
-    def delete_multiple(self, ids, callback_excs=None, **kwargs):
-        excs = {}
-
-        for id in ids:
-            try:
-                self.delete(id, **kwargs)
-            except Exception as e:
-                excs[id] = e
-
-        if callback_excs:
-            callback_excs(excs)
-
-        return not len(excs)
+    def delete_multiple(self, ids, **kwargs):
+        [pk] = db.get_primary_key()
+        field = getattr(self.model_class, pk)
+        result = self.query.filter(field.in_(ids)).delete()
+        return result == len(ids)

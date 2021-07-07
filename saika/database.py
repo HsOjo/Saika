@@ -19,6 +19,10 @@ class Database(SQLAlchemy):
         query = getattr(model, 'query')  # type: BaseQuery
         return query
 
+    @staticmethod
+    def get_primary_key(model):
+        return [column.name for column in model.__table__.primary_key]
+
     def add_instance(self, instance, commit=True):
         self.session.add(instance)
         if commit:
