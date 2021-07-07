@@ -54,7 +54,7 @@ class Form(FlaskForm):
             if isinstance(f, FormField):
                 data.update(form=f.form.dump_fields())
             elif isinstance(f, FieldList):
-                data.update(item=dump_field(f.unbound_field.bind(f, f.name)))
+                data.update(item=dump_field(f.append_entry()))
             elif isinstance(f, SelectField):
                 data.update(type=f.coerce)
 
