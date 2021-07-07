@@ -43,9 +43,15 @@ class Form(FlaskForm):
                     required = True
                     break
 
+            type_ = types_mapping.get(type(f), object)
+            if type_ is object:
+                for cls in types_mapping:
+                    if issubclass(type(f), cls):
+                        type_ = types_mapping[cls]
+
             data = dict(
                 label=f.label.text,
-                type=types_mapping.get(type(f), str),
+                type=type_,
                 default=f.default,
                 description=f.description,
                 required=required,
