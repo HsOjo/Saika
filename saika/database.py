@@ -23,6 +23,12 @@ class Database(SQLAlchemy):
     def get_primary_key(model):
         return [column.name for column in model.__table__.primary_key]
 
+    @staticmethod
+    def get_relationship_class(field):
+        if hasattr(field.comparator, 'entity'):
+            return field.comparator.entity.class_
+        return None
+
     def add_instance(self, instance, commit=True):
         self.session.add(instance)
         if commit:
