@@ -2,6 +2,7 @@ from flask_sqlalchemy import BaseQuery
 from wtforms import StringField, IntegerField, FieldList, FormField
 from wtforms.validators import DataRequired
 
+from saika import common
 from saika.database import db
 from saika.form import Form, JSONForm
 from saika.form.fields import DataField
@@ -22,8 +23,8 @@ class FieldOperateForm(Form):
             # 第一次循环，field为模型本身，跳过
             if index > 0:
                 primary, secondary = db.get_relationship_models(field)
-                relationship_models.append(primary)
                 relationship_models.append(secondary)
+                relationship_models.append(primary)
                 field = primary
             # 从模型中获取对应字段
             field = getattr(field, field_str, None)
@@ -39,7 +40,7 @@ class FieldOperateForm(Form):
         if not isinstance(args, list):
             args = [args]
 
-        relationship_models = list(set(relationship_models))
+        relationship_models = common.list_groupby(relationship_models)
         for i in reversed(relationship_models):
             if i is None or i == model:
                 relationship_models.remove(i)
@@ -77,9 +78,9 @@ class AdvancedPaginateForm(PaginateForm):
         handle_operate_fields(self.filters, filters)
         handle_operate_fields(self.orders, orders)
 
-        if relationship_models:
-            for relationship_model in set(relationship_models):
-                query = query.join(relationship_model)
+        for relationship_model in common.list_groupby(relationship_models):
+            query = query.join(relationship_model)
+
         if filters:
             query = query.filter(*filters)
         if orders:
