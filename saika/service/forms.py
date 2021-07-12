@@ -17,11 +17,15 @@ class FieldOperateForm(Form):
         relationship_models = []
 
         field = model
+        # 根据表单field字段获取模型所关联的字段，如 'category.id' -> Category.id
         for index, field_str in enumerate(self.field.data.split('.')):
+            # 第一次循环，field为模型本身，跳过
             if index > 0:
-                field = db.get_relationship_class(field)
-                if field != model:
-                    relationship_models.append(field)
+                primary, secondary = db.get_relationship_models(field)
+                relationship_models.append(primary)
+                relationship_models.append(secondary)
+                field = primary
+            # 从模型中获取对应字段
             field = getattr(field, field_str, None)
             if field is None:
                 return None
@@ -35,7 +39,12 @@ class FieldOperateForm(Form):
         if not isinstance(args, list):
             args = [args]
 
-        return operator(field, args), set(relationship_models)
+        relationship_models = list(set(relationship_models))
+        for i in reversed(relationship_models):
+            if i is None or i == model:
+                relationship_models.remove(i)
+
+        return operator(field, args), relationship_models
 
 
 class PaginateForm(JSONForm):

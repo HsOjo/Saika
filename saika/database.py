@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 
 from . import hard_code
 from .config import Config
+from .meta_table import MetaTable
 
 
 class Database(SQLAlchemy):
@@ -23,11 +24,23 @@ class Database(SQLAlchemy):
     def get_primary_key(model):
         return [column.name for column in model.__table__.primary_key]
 
-    @staticmethod
-    def get_relationship_class(field):
+    @property
+    def models(self):
+        return MetaTable.get(hard_code.MI_GLOBAL, hard_code.MK_MODEL_CLASSES, [])  # type: list
+
+    def get_relationship_models(self, field):
+        primary, secondary = None, None
+
         if hasattr(field.comparator, 'entity'):
-            return field.comparator.entity.class_
-        return None
+            primary = field.comparator.entity.class_
+
+        if hasattr(field.prop, 'secondary'):
+            models = dict((model.__tablename__, model) for model in self.models)
+            secondary_table = field.prop.secondary
+            if hasattr(secondary_table, 'name'):
+                secondary = models.get(secondary_table.name)
+
+        return primary, secondary
 
     def add_instance(self, instance, commit=True):
         self.session.add(instance)
