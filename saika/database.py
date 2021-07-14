@@ -28,7 +28,7 @@ class Database(SQLAlchemy):
     def models(self):
         return MetaTable.get(hard_code.MI_GLOBAL, hard_code.MK_MODEL_CLASSES, [])  # type: list
 
-    def get_relationship_models(self, field):
+    def get_relationship_objs(self, field):
         primary, secondary = None, None
 
         if hasattr(field.comparator, 'entity'):
@@ -36,9 +36,9 @@ class Database(SQLAlchemy):
 
         if hasattr(field.prop, 'secondary'):
             models = dict((model.__tablename__, model) for model in self.models)
-            secondary_table = field.prop.secondary
-            if hasattr(secondary_table, 'name'):
-                secondary = models.get(secondary_table.name)
+            secondary = field.prop.secondary
+            if hasattr(secondary, 'name'):
+                secondary = models.get(secondary.name)
 
         return primary, secondary
 
