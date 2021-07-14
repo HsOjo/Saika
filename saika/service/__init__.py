@@ -40,7 +40,8 @@ class Service:
         db.delete_instance(item)
 
     def delete_multiple(self, ids, **kwargs):
-        [pk] = db.get_primary_key()
-        field = getattr(self.model_class, pk)
+        model = self.model_class
+        [pk] = db.get_primary_key(model)
+        field = getattr(model, pk)
         result = self.query.filter(field.in_(ids)).delete()
         return result == len(ids)
