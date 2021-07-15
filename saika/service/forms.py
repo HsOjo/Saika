@@ -40,7 +40,7 @@ class FieldOperateForm(Form):
         if operator is None:
             return None
 
-        args = self.args.data or []
+        args = self.args.data
 
         if not isinstance(args, list):
             args = [args]
