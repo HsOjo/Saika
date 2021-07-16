@@ -46,7 +46,7 @@ def register(manager):
                         item.update(rest_args=rest_args)
                     if form_cls:
                         form = form_cls()
-                        item.update(validate=validate, form=form.dump_fields(), form_type=form.type)
+                        item.update(validate=validate, form=form.dump_fields(), form_type=form.form_type)
 
                     item_id = re.sub(r'[^A-Z]', '_', path.upper()).strip('_')
                     item_id = re.sub(r'_+', '_', item_id)
