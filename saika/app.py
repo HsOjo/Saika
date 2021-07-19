@@ -80,7 +80,7 @@ class SaikaApp(Flask):
 
     def _init_app(self):
         db.init_app(self)
-        migrate.init_app(self, db)
+        migrate.init_app(self, db, render_as_batch=True)
         cors.init_app(self, **(Config.section('cors') or dict(
             supports_credentials=True,
         )))

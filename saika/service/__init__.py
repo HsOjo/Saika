@@ -34,6 +34,7 @@ class Service:
     def add(self, **kwargs):
         model = self.model_class(**kwargs)
         db.add_instance(model)
+        return model
 
     def edit(self, id, **kwargs):
         item = self.item(id)
