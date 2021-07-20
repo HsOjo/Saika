@@ -5,6 +5,7 @@ from .forms import FieldOperateForm
 class Service:
     def __init__(self, model_class):
         self.model_class = model_class
+        self.model_pks = db.get_primary_key(model_class)
         self.order = None
 
     def set_order(self, *order):
@@ -51,9 +52,11 @@ class Service:
         item = self.item(id)
         db.delete_instance(item)
 
-    def delete_multiple(self, ids, **kwargs):
+    def delete_multiple(self, ids, query=None, **kwargs):
+        if query is None:
+            query = self.query
         model = self.model_class
-        [pk] = db.get_primary_key(model)
+        [pk] = self.model_pks
         field = getattr(model, pk)
-        result = self.query.filter(field.in_(ids)).delete()
+        result = query.filter(field.in_(ids)).delete()
         return result == len(ids)
