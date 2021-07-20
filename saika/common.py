@@ -45,3 +45,11 @@ def rule_to_rest(rule_str):
         args[key] = dict(type=type_)
 
     return path, args
+
+
+def list_groupby(x):
+    result = []
+    for i in x:
+        if i not in result:
+            result.append(i)
+    return result

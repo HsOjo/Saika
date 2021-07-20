@@ -14,7 +14,7 @@ FORM_TYPE_REST = 'rest'
 class Form(FlaskForm):
     data: dict
     errors: dict
-    type = FORM_TYPE_FORM
+    form_type = FORM_TYPE_FORM
 
     def inject_obj_data(self, obj):
         for k in self.data:
@@ -43,9 +43,15 @@ class Form(FlaskForm):
                     required = True
                     break
 
+            type_ = types_mapping.get(type(f), object)
+            if type_ is object:
+                for cls in types_mapping:
+                    if issubclass(type(f), cls):
+                        type_ = types_mapping[cls]
+
             data = dict(
                 label=f.label.text,
-                type=types_mapping.get(type(f), str),
+                type=type_,
                 default=f.default,
                 description=f.description,
                 required=required,
@@ -54,7 +60,7 @@ class Form(FlaskForm):
             if isinstance(f, FormField):
                 data.update(form=f.form.dump_fields())
             elif isinstance(f, FieldList):
-                data.update(item=dump_field(f.unbound_field.bind(f, f.name)))
+                data.update(item=dump_field(f.append_entry()))
             elif isinstance(f, SelectField):
                 data.update(type=f.coerce)
 
@@ -67,21 +73,21 @@ class Form(FlaskForm):
 
 
 class ArgsForm(Form):
-    type = FORM_TYPE_ARGS
+    form_type = FORM_TYPE_ARGS
 
     def __init__(self, **kwargs):
         super().__init__(MultiDict(Context.request.args), **kwargs)
 
 
 class ViewArgsForm(Form):
-    type = FORM_TYPE_REST
+    form_type = FORM_TYPE_REST
 
     def __init__(self, **kwargs):
         super().__init__(MultiDict(Context.request.view_args), **kwargs)
 
 
 class JSONForm(Form):
-    type = FORM_TYPE_JSON
+    form_type = FORM_TYPE_JSON
 
     def __init__(self, **kwargs):
         formdata = Context.request.get_json()

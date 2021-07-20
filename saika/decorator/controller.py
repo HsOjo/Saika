@@ -28,7 +28,10 @@ def controller(url_prefix=None, template_folder=None, static_folder=None, **opti
         if url_prefix is None or cls is url_prefix:
             module = cls.__module__  # type: str
             module = module.lstrip(Environ.app.__module__)
-            opts[hard_code.MK_URL_PREFIX] = module.replace('.', '/')
+            module_parts = module.split('.')
+            if module_parts[-1] == 'controller':
+                module_parts.pop(-1)
+            opts[hard_code.MK_URL_PREFIX] = '/'.join(module_parts)
 
         controllers = MetaTable.get(hard_code.MI_GLOBAL, hard_code.MK_CONTROLLER_CLASSES, [])  # type: list
         controllers.append(cls)
