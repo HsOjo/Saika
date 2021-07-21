@@ -56,4 +56,6 @@ class Service:
             query = self.query
         [pk] = self.model_pks
         field = getattr(self.model_class, pk)
-        return query.filter(field.in_(ids)).delete()
+        result = query.filter(field.in_(ids)).delete()
+        db.session.commit()
+        return result
