@@ -49,14 +49,11 @@ class Service:
         return True
 
     def delete(self, id, **kwargs):
-        item = self.item(id)
-        db.delete_instance(item)
+        return self.delete_multiple([id], **kwargs)
 
     def delete_multiple(self, ids, query=None, **kwargs):
         if query is None:
             query = self.query
-        model = self.model_class
         [pk] = self.model_pks
-        field = getattr(model, pk)
-        result = query.filter(field.in_(ids)).delete()
-        return result == len(ids)
+        field = getattr(self.model_class, pk)
+        return query.filter(field.in_(ids)).delete()
