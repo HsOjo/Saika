@@ -42,6 +42,11 @@ class Database(SQLAlchemy):
 
         return primary, secondary
 
+    def get_query_models(self, query):
+        models = [i.get('entity') for i in query.column_descriptions]
+        models = [model for model in models if model is not None]
+        return models
+
     def add_instance(self, instance, commit=True):
         self.session.add(instance)
         if commit:

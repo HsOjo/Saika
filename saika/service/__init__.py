@@ -52,6 +52,9 @@ class Service:
         return self.delete_multiple([id], **kwargs)
 
     def delete_multiple(self, ids, query=None, **kwargs):
+        if not ids:
+            return
+
         if query is None:
             query = self.query
         [pk] = self.model_pks
