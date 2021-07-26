@@ -49,8 +49,9 @@ class Form(FlaskForm):
                     if issubclass(type(f), cls):
                         type_ = types_mapping[cls]
 
+            label = str(f.label.text).strip()
             data = dict(
-                label=f.label.text,
+                label=label,
                 type=type_,
                 default=f.default,
                 description=f.description,
