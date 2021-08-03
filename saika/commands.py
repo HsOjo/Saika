@@ -20,7 +20,8 @@ def register(manager):
             opts = controller.options
 
             api_doc = {}
-            for func in controller.view_functions:
+            for _func in controller.view_functions:
+                func = _func.__func__
                 metas = MetaTable.all(func)
 
                 url_prefix = opts.get(hard_code.MK_URL_PREFIX)

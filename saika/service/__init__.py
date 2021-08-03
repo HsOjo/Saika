@@ -7,17 +7,28 @@ class Service:
         self.model_class = model_class
         self.model_pks = db.get_primary_key(model_class)
         self.order = None
+        self.filter = None
 
     def set_order(self, *order):
         self.order = order
+
+    def set_filter(self, *filter):
+        self.filter = filter
 
     @property
     def query(self):
         return db.query(self.model_class)
 
     @property
-    def query_order(self):
+    def query_filter(self):
         query = self.query
+        if self.filter:
+            query = query.filter(*self.filter)
+        return query
+
+    @property
+    def query_order(self):
+        query = self.query_filter
         if self.order:
             query = query.order_by(*self.order)
         return query
@@ -29,8 +40,11 @@ class Service:
 
     def item(self, id, query=None, **kwargs):
         if query is None:
-            query = self.query
-        return query.get(id)
+            query = self.query_filter
+        [pk] = self.model_pks
+        field = getattr(self.model_class, pk)
+        item = query.filter(field.__eq__(id)).first()
+        return item
 
     def add(self, **kwargs):
         model = self.model_class(**kwargs)
@@ -49,14 +63,16 @@ class Service:
         return True
 
     def delete(self, id, **kwargs):
-        item = self.item(id)
-        db.delete_instance(item)
+        return self.delete_multiple([id], **kwargs)
 
     def delete_multiple(self, ids, query=None, **kwargs):
+        if not ids:
+            return
+
         if query is None:
-            query = self.query
-        model = self.model_class
+            query = self.query_filter
         [pk] = self.model_pks
-        field = getattr(model, pk)
+        field = getattr(self.model_class, pk)
         result = query.filter(field.in_(ids)).delete()
-        return result == len(ids)
+        db.session.commit()
+        return result

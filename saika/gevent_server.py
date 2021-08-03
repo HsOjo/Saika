@@ -26,7 +26,7 @@ class GEventServer(Server):
             use_reloader = app.debug
 
         if not use_reloader or is_running_from_reloader():
-            print(' * Serving Saika "%s"' % (Environ.app.import_name))
+            print(' * Serving SaikaApp "%s"' % (Environ.app.import_name))
             print('   - Saika Version: %s' % Const.version)
             print(' * Environment: %s' % app.env)
             if app.env == 'production':

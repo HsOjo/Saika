@@ -14,7 +14,7 @@ from . import hard_code
 from .config import Config
 from .const import Const
 from .context import Context
-from .controller import WebController
+from .controller import WebController, ControllerBase
 from .cors import cors
 from .database import db, migrate
 from .environ import Environ
@@ -39,7 +39,8 @@ class SaikaApp(Flask):
 
         self.web_controllers = []  # type: List[WebController]
         self.socket_controllers = []  # type: List[SocketController]
-        self.sio_controllers = []  # type: List[SocketIOController]
+        self.socket_io_controllers = []  # type: List[SocketIOController]
+        self.other_controllers = []  # type: List[ControllerBase]
 
         try:
             self._init_env()
@@ -59,13 +60,13 @@ class SaikaApp(Flask):
             raise Exception('SaikaApp was created.')
 
         Environ.app = self
-        Environ.debug = bool(os.getenv(hard_code.SAIKA_DEBUG))
+        Environ.debug = bool(int(os.getenv(hard_code.SAIKA_DEBUG, 0)))
 
         app_path = sys.modules[self.import_name].__file__
         if os.path.exists(app_path):
             app_dir = os.path.dirname(app_path)
             if '__init__' in os.path.basename(app_path):
-                Environ.program_path = os.path.join(app_dir, '..')
+                Environ.program_path = os.path.abspath(os.path.join(app_dir, '..'))
             else:
                 Environ.program_path = app_dir
         else:
@@ -75,6 +76,7 @@ class SaikaApp(Flask):
         Environ.data_path = os.path.abspath(os.path.join(Environ.program_path, Const.data_dir))
 
     def _init_config(self):
+        Config.load()
         cfg = Config.merge()
         self.config.from_mapping(cfg)
 
@@ -100,20 +102,20 @@ class SaikaApp(Flask):
 
     def _init_controllers(self):
         controller_classes = MetaTable.get(hard_code.MI_GLOBAL, hard_code.MK_CONTROLLER_CLASSES, [])
+        controller_mapping = {
+            WebController: dict(args=[self], group=self.web_controllers),
+            SocketController: dict(args=[socket], group=self.socket_controllers),
+            SocketIOController: dict(args=[socket_io], group=self.socket_io_controllers),
+            ControllerBase: dict(args=[], group=self.other_controllers),
+        }
+
         for cls in controller_classes:
-            if issubclass(cls, WebController):
-                item = cls()
-                item.instance_register(self)
-                self.web_controllers.append(item)
-            elif issubclass(cls, SocketController):
-                item = cls()
-                item.instance_register(socket)
-                self.socket_controllers.append(item)
-            elif issubclass(cls, SocketIOController):
-                options = MetaTable.get(cls, hard_code.MK_OPTIONS)
-                item = cls(namespace=options.pop(hard_code.MK_URL_PREFIX, None))
-                socket_io.on_namespace(item)
-                self.sio_controllers.append(item)
+            item = cls()
+            for controller_cls, controller_params in controller_mapping.items():
+                if issubclass(cls, controller_cls):
+                    item.instance_register(*controller_params['args'])
+                    controller_params['group'].append(item)
+                    break
 
     def _init_context(self):
         for name, obj in self.make_context().items():
@@ -130,12 +132,39 @@ class SaikaApp(Flask):
         for item in items:
             self.add_template_global(item)
 
-    def _import_modules(self):
-        module = self.__class__.__module__
-        sub_modules = list(pkgutil.iter_modules([module], '%s.' % module))
-        sub_modules = [i.name for i in sub_modules if i.ispkg]
-        for i in sub_modules:
-            importlib.import_module(i)
+    def _import_modules(self, module_name=None):
+        if module_name is None:
+            module_name = self.__class__.__module__
+
+        module = sys.modules.get(module_name)
+        if module is None or module_name.startswith('saika'):
+            return
+        module_dir = os.path.dirname(module.__file__)
+
+        sub_modules = list(pkgutil.iter_modules([module_dir]))
+        sub_pkgs = []
+        sub_modules_import = []
+        for sub_module in sub_modules:
+            if sub_module.ispkg:
+                sub_pkgs.append('%s.%s' % (module_name, sub_module.name))
+            else:
+                sub_module_name_l = sub_module.name.lower()
+                for k in ['controller', 'model']:
+                    if k in sub_module_name_l:
+                        sub_modules_import.append('%s.%s' % (module_name, sub_module.name))
+
+        def import_module(module_name):
+            try:
+                importlib.import_module(module_name)
+            except Exception as e:
+                Environ.app.logger.error(e)
+
+        for sub_pkg in sub_pkgs:
+            import_module(sub_pkg)
+            self._import_modules(sub_pkg)
+
+        for sub_module in sub_modules_import:
+            import_module(sub_module)
 
     def callback_init_app(self):
         pass
@@ -153,3 +182,16 @@ class SaikaApp(Flask):
             os.kill(os.getppid(), signal.SIGHUP)
         else:
             self.logger.warning(' * App Reload: Support reload in gunicorn only.')
+
+    def run(self, host=None, port=None, debug=None, load_dotenv=True, **options):
+        from .gevent_server import GEventServer, is_running_from_reloader
+        import multiprocessing
+        server = GEventServer()
+        host = host or '127.0.0.1'
+        options.setdefault('use_reloader', is_running_from_reloader())
+        options.setdefault('threaded', 2)
+        options.setdefault('processes', multiprocessing.cpu_count())
+        options.setdefault('passthrough_errors', True)
+        options.setdefault('ssl_crt', None)
+        options.setdefault('ssl_key', None)
+        server(self, host, port, debug, **options)
