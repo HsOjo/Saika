@@ -2,15 +2,28 @@ import re
 
 from flask_socketio import Namespace
 
+from saika import hard_code
 from saika.context import Context
+from saika.meta_table import MetaTable
 
 
 class SocketIOController(Namespace):
+    def __init__(self):
+        super().__init__(namespace=self.options.pop(hard_code.MK_URL_PREFIX, None))
+
+    def instance_register(self, socket_io):
+        socket_io.on_namespace(self)
+
     def trigger_event(self, event, *args):
         event = re.sub('[A-Z]+', lambda x: '_%s' % x.group().lower(), event)
         event = re.sub('[^a-z0-9$]', '_', event)
         event = event.strip('_')
         super().trigger_event(event, *args)
+
+    @property
+    def options(self):
+        options = MetaTable.get(self.__class__, hard_code.MK_OPTIONS, {})  # type: dict
+        return options
 
     @property
     def context(self):

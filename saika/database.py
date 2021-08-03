@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 
 from . import hard_code
 from .config import Config
+from .environ import Environ
 from .meta_table import MetaTable
 
 
@@ -61,6 +62,10 @@ class Database(SQLAlchemy):
 @Config.process
 def merge_uri(config):
     db = Config.section(hard_code.CK_DATABASE)
+    if not db:
+        Environ.app.logger.warning(' * Database config is not defined.')
+        return
+
     driver = db['driver'].lower()
     if 'mysql' in driver or 'postgresql' in driver:
         uri = '%(driver)s://%(user)s:%(password)s@%(host)s:%(port)d/%(database)s?charset=%(charset)s' % db
