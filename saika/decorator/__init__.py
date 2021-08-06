@@ -1,3 +1,4 @@
+from .context import with_app_context
 from .controller import controller, get, post, rule, rule_rs
 from .database import model
 from .doc import doc

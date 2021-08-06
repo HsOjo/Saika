@@ -16,8 +16,8 @@ class Database(SQLAlchemy):
         engine = self.get_engine(**kwargs)  # type: Engine
         engine.dispose()
 
-    @staticmethod
-    def query(model):
+    def query(self, model):
+        self.session.commit()
         query = getattr(model, 'query')  # type: BaseQuery
         return query
 
