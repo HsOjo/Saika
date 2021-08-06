@@ -3,6 +3,7 @@ from .workers import worker, gevent_patch
 
 gevent_patch()
 
+from .cli import Saika
 from .app import SaikaApp
 from .config import Config
 from .const import Const
@@ -12,7 +13,6 @@ from .cors import cors
 from .database import db, migrate
 from .environ import Environ
 from .exception import AppException, APIException
-from .manager import init_manager
 from .meta_table import MetaTable
 from .socket import socket, SocketController, EventSocketController
 from .socket_io import socket_io, SocketIOController

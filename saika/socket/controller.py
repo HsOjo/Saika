@@ -1,6 +1,7 @@
-from saika.controller import WebController
+from saika.controller import WebController, BaseController
 
 
 class SocketController(WebController):
-    def instance_register(self, socket):
+    def register(self, socket):
+        super(BaseController).register(None)
         socket.register_blueprint(self.blueprint, **self.options)

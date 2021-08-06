@@ -14,7 +14,8 @@ from . import hard_code
 from .config import Config
 from .const import Const
 from .context import Context
-from .controller import WebController, ControllerBase
+from .controller import BaseController, CliController
+from .controller.blueprint import BlueprintController
 from .cors import cors
 from .database import db, migrate
 from .environ import Environ
@@ -37,10 +38,7 @@ class SaikaApp(Flask):
         self.set_form_validate_default = set_form_validate_default
         self.set_fork_killer = set_fork_killer
 
-        self.web_controllers = []  # type: List[WebController]
-        self.socket_controllers = []  # type: List[SocketController]
-        self.socket_io_controllers = []  # type: List[SocketIOController]
-        self.other_controllers = []  # type: List[ControllerBase]
+        self._controllers = []  # type: List[BaseController]
 
         try:
             self._init_env()
@@ -52,6 +50,7 @@ class SaikaApp(Flask):
             self._init_callbacks()
             self._init_context()
             self._init_controllers()
+            self._init_cli()
         except:
             traceback.print_exc(file=sys.stderr)
 
@@ -103,34 +102,47 @@ class SaikaApp(Flask):
     def _init_controllers(self):
         controller_classes = MetaTable.get(hard_code.MI_GLOBAL, hard_code.MK_CONTROLLER_CLASSES, [])
         controller_mapping = {
-            WebController: dict(args=[self], group=self.web_controllers),
-            SocketController: dict(args=[socket], group=self.socket_controllers),
-            SocketIOController: dict(args=[socket_io], group=self.socket_io_controllers),
-            ControllerBase: dict(args=[], group=self.other_controllers),
+            SocketController: [socket],
+            SocketIOController: [socket_io],
+            BlueprintController: [self],
+            BaseController: [],
         }
 
         for cls in controller_classes:
             item = cls()
-            for controller_cls, controller_params in controller_mapping.items():
+            for controller_cls, controller_args in controller_mapping.items():
                 if issubclass(cls, controller_cls):
-                    item.instance_register(*controller_params['args'])
-                    controller_params['group'].append(item)
+                    item.register(*controller_args)
+                    self._controllers.append(item)
                     break
 
+    def _init_cli(self):
+        functions = []
+        for controller in self._controllers:
+            if isinstance(controller, CliController):
+                functions += [f.__func__ for f in controller.functions]
+
+        commands = MetaTable.get(hard_code.MI_GLOBAL, hard_code.MK_COMMANDS, [])  # type: list
+
+        add_functions = [command for command in commands if command not in functions]
+        for f in add_functions:
+            self.cli.command()(f)
+
     def _init_context(self):
-        for name, obj in self.make_context().items():
+        for name, obj in make_context().items():
             self.add_template_global(obj, name)
 
         items = []
         for key in dir(builtins):
             item = getattr(builtins, key)
-            type_name = type(item).__name__
-            if key[0] != '_' and hasattr(item, '__name__') and (
-                    type_name == 'builtin_function_or_method' or re.match('^[a-z]+$', key)):
+            is_builtin = type(item).__name__ == 'builtin_function_or_method'
+            if key[0] != '_' and hasattr(item, '__name__') and (is_builtin or re.match('^[a-z]+$', key)):
                 items.append(item)
 
         for item in items:
             self.add_template_global(item)
+
+        self.shell_context_processor(make_context)
 
     def _import_modules(self, module_name=None):
         if module_name is None:
@@ -169,29 +181,20 @@ class SaikaApp(Flask):
     def callback_init_app(self):
         pass
 
-    @staticmethod
-    def make_context():
-        context = dict(Config=Config, Const=Const, Context=Context, db=db, Environ=Environ, MetaTable=MetaTable)
-        classes = MetaTable.get(hard_code.MI_GLOBAL, hard_code.MK_MODEL_CLASSES, [])
-        for cls in classes:
-            context[cls.__name__] = cls
-        return context
-
     def reload(self):
         if Environ.is_gunicorn():
             os.kill(os.getppid(), signal.SIGHUP)
         else:
             self.logger.warning(' * App Reload: Support reload in gunicorn only.')
 
-    def run(self, host=None, port=None, debug=None, load_dotenv=True, **options):
-        from .gevent_server import GEventServer, is_running_from_reloader
-        import multiprocessing
-        server = GEventServer()
-        host = host or '127.0.0.1'
-        options.setdefault('use_reloader', is_running_from_reloader())
-        options.setdefault('threaded', 2)
-        options.setdefault('processes', multiprocessing.cpu_count())
-        options.setdefault('passthrough_errors', True)
-        options.setdefault('ssl_crt', None)
-        options.setdefault('ssl_key', None)
-        server(self, host, port, debug, **options)
+    @property
+    def controllers(self):
+        return self._controllers
+
+
+def make_context():
+    context = dict(Config=Config, Const=Const, Context=Context, db=db, Environ=Environ, MetaTable=MetaTable)
+    classes = MetaTable.get(hard_code.MI_GLOBAL, hard_code.MK_MODEL_CLASSES, [])
+    for cls in classes:
+        context[cls.__name__] = cls
+    return context
