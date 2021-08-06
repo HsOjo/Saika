@@ -13,6 +13,7 @@ from saika import hard_code
 from saika.const import Const
 from saika.context import Context
 from saika.controller.cli import CliController
+from saika.controller.web import WebController
 from saika.decorator import *
 from saika.form import AUTO
 from saika.meta_table import MetaTable
@@ -33,6 +34,9 @@ class Saika(CliController):
 
         docs = {}
         for controller in app.controllers:
+            if not isinstance(controller, WebController):
+                continue
+
             doc = MetaTable.get(controller.__class__, hard_code.MK_DOCUMENT, dict(name=controller.name)).copy()
             opts = controller.options
 
