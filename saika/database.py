@@ -3,7 +3,7 @@ from flask_sqlalchemy import SQLAlchemy, BaseQuery
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session
 
-from . import hard_code
+from . import hard_code, common
 from .config import Config
 from .environ import Environ
 from .meta_table import MetaTable
@@ -11,6 +11,12 @@ from .meta_table import MetaTable
 
 class Database(SQLAlchemy):
     session: Session
+
+    def __init__(self, *args, **kwargs):
+        engine_options = kwargs.pop('engine_options', {})
+        engine_options.setdefault('json_serializer', common.to_json)
+        engine_options.setdefault('json_deserializer', common.from_json)
+        super().__init__(*args, **kwargs, engine_options=engine_options)
 
     def dispose_engine(self, **kwargs):
         engine = self.get_engine(**kwargs)  # type: Engine

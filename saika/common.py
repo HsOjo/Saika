@@ -1,4 +1,5 @@
 import base64
+import json
 import re
 
 from itsdangerous import TimedJSONWebSignatureSerializer
@@ -53,3 +54,12 @@ def list_groupby(x):
         if i not in result:
             result.append(i)
     return result
+
+
+def to_json(obj, **kwargs):
+    kwargs.setdefault('ensure_ascii', False)
+    return json.dumps(obj, **kwargs)
+
+
+def from_json(obj_str, **kwargs):
+    return json.loads(obj_str, **kwargs)

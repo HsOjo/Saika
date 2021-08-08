@@ -1,7 +1,7 @@
 import json
 import os
 
-from . import hard_code
+from . import hard_code, common
 from .environ import Environ
 
 _config = {}
@@ -36,7 +36,7 @@ class Config:
 
     @staticmethod
     def save(path):
-        cfg_str = json.dumps(_config, ensure_ascii=False, indent=2)
+        cfg_str = common.to_json(_config, indent=2)
         with open(path, 'w') as io:
             io.write(cfg_str)
 

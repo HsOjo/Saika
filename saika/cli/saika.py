@@ -1,4 +1,3 @@
-import json
 import re
 import sys
 import time
@@ -82,7 +81,7 @@ class Saika(CliController):
             docs[controller.name] = doc
 
         docs = common.obj_standard(docs, True, True, True)
-        docs_json = json.dumps(docs, indent=2, ensure_ascii=False)
+        docs_json = common.to_json(docs, indent=2)
 
         print(docs_json)
 
