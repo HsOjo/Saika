@@ -33,6 +33,12 @@ class Service:
             query = query.order_by(*self.order)
         return query
 
+    @property
+    def pk_field(self):
+        [pk] = self.model_pks
+        field = getattr(self.model_class, pk)
+        return field
+
     def list(self, page, per_page, query=None, **kwargs):
         if query is None:
             query = self.query_order
@@ -41,10 +47,7 @@ class Service:
     def item(self, id, query=None, **kwargs):
         if query is None:
             query = self.query_filter
-        [pk] = self.model_pks
-        field = getattr(self.model_class, pk)
-        item = query.filter(field.__eq__(id)).first()
-        return item
+        return query.filter(self.pk_field.__eq__(id)).first()
 
     def add(self, **kwargs):
         model = self.model_class(**kwargs)
@@ -52,15 +55,9 @@ class Service:
         return model
 
     def edit(self, id, **kwargs):
-        item = self.item(id)
-        if not item:
-            return False
-
-        for k, v in kwargs.items():
-            setattr(item, k, v)
-
-        db.add_instance(item)
-        return True
+        result = self.query_filter.filter(self.pk_field.__eq__(id)).update(kwargs)
+        db.session.commit()
+        return result
 
     def delete(self, id, **kwargs):
         return self.delete_multiple([id], **kwargs)
@@ -68,11 +65,8 @@ class Service:
     def delete_multiple(self, ids, query=None, **kwargs):
         if not ids:
             return
-
         if query is None:
             query = self.query_filter
-        [pk] = self.model_pks
-        field = getattr(self.model_class, pk)
-        result = query.filter(field.in_(ids)).delete()
+        result = query.filter(self.pk_field.in_(ids)).delete()
         db.session.commit()
         return result
