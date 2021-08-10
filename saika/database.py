@@ -64,6 +64,16 @@ class Database(SQLAlchemy):
         if commit:
             self.session.commit()
 
+    @staticmethod
+    def dump_instance(instance):
+        if not hasattr(instance, '__table__'):
+            return None
+        
+        data = {}
+        for column in instance.__table__.columns:
+            data[column.name] = getattr(instance, column.name)
+        return data
+
 
 @Config.process
 def merge_uri(config):
