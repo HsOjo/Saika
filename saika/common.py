@@ -48,7 +48,7 @@ def rule_to_rest(rule_str):
     return path, args
 
 
-def list_groupby(x):
+def list_group_by(x):
     result = []
     for i in x:
         if i not in result:

@@ -45,7 +45,7 @@ class FieldOperateForm(Form):
         if not isinstance(args, list):
             args = [args]
 
-        relationship_objs = common.list_groupby(relationship_objs)
+        relationship_objs = common.list_group_by(relationship_objs)
         for i in reversed(relationship_objs):
             if i is None or i == model:
                 relationship_objs.remove(i)
@@ -84,7 +84,7 @@ class AdvancedPaginateForm(PaginateForm):
         handle_operate_fields(self.filters, filters)
         handle_operate_fields(self.orders, orders)
 
-        for relationship_model in common.list_groupby(relationship_objs):
+        for relationship_model in common.list_group_by(relationship_objs):
             query = query.join(relationship_model)
 
         if filters:

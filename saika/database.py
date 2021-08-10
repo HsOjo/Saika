@@ -1,3 +1,6 @@
+import re
+from typing import List
+
 from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy, BaseQuery
 from sqlalchemy.engine import Engine
@@ -65,14 +68,75 @@ class Database(SQLAlchemy):
             self.session.commit()
 
     @staticmethod
-    def dump_instance(instance):
+    def dump_instance(instance, *columns, hidden_columns: List[str] = None):
         if not hasattr(instance, '__table__'):
             return None
-        
-        data = {}
-        for column in instance.__table__.columns:
-            data[column.name] = getattr(instance, column.name)
-        return data
+
+        table_columns = list(instance.__table__.columns)
+        table_columns_name = [column.name for column in table_columns]
+        model_props = dict(instance.__class__.__dict__)
+        if not columns:
+            columns = table_columns
+
+        def preprocess_columns(columns):
+            if columns is None:
+                return []
+
+            result = list(columns)
+            for i, column in enumerate(result):
+                if isinstance(column, property):
+                    for k, v in model_props.items():
+                        if column is v:
+                            result[i] = k
+                            break
+                elif column in table_columns:
+                    result[i] = column.name
+            return result
+
+        columns = preprocess_columns(columns)
+        hidden_columns = preprocess_columns(hidden_columns)
+
+        def match_columns(column, target_columns):
+            result = []
+            if column == '*':
+                result += target_columns
+            else:
+                for match_column in target_columns:
+                    if isinstance(match_column, str):
+                        if re.match(column.replace('*', '.*'), match_column):
+                            result.append(match_column)
+
+            return result
+
+        dump_columns = []
+        for column in columns:
+            if isinstance(column, str) and '*' in column:
+                dump_columns += match_columns(column, table_columns_name)
+            else:
+                dump_columns.append(column)
+
+        dump_columns = common.list_group_by(dump_columns)
+
+        if hidden_columns is not None:
+            for column in hidden_columns:
+                if column in dump_columns:
+                    dump_columns.remove(column)
+                elif isinstance(column, str) and '*' in column:
+                    for column_match in match_columns(column, dump_columns):
+                        dump_columns.remove(column_match)
+
+        if dump_columns:
+            data = {}
+            for column in dump_columns:
+                if callable(column):
+                    patch = column(instance)  # type: dict
+                    data.update(patch)
+                elif isinstance(column, str):
+                    data[column] = getattr(instance, column)
+                else:
+                    raise Exception('Invalid Column:', column)
+
+            return data
 
 
 @Config.process
