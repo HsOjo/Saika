@@ -138,6 +138,19 @@ class Database(SQLAlchemy):
 
             return data
 
+    @staticmethod
+    def load_instance(instance, **kwargs):
+        if not hasattr(instance, '__table__'):
+            return False
+
+        table_columns = list(instance.__table__.columns)
+        table_columns_name = [column.name for column in table_columns]
+        for k, v in kwargs:
+            if k in table_columns_name:
+                setattr(instance, k, v)
+
+        return True
+
 
 @Config.process
 def merge_uri(config):
