@@ -10,10 +10,9 @@ class CliController(BlueprintController):
         self._blueprint.cli.help = self.__class__.__doc__
 
     def _register_functions(self):
-        functions = self.get_functions(CliController)
         commands = MetaTable.get(hard_code.MI_GLOBAL, hard_code.MK_COMMANDS, [])  # type: list
 
-        for f in functions:
+        for f in self.methods:
             _f = f
             if hasattr(f, '__func__'):
                 f = f.__func__

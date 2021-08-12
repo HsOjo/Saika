@@ -1,5 +1,4 @@
 from flask import abort, redirect, flash, url_for, send_file, send_from_directory, make_response, request
-from werkzeug.local import LocalProxy
 
 from saika import hard_code
 from saika.context import Context
@@ -20,7 +19,10 @@ class WebController(BlueprintController):
         self.send_file = send_file
         self.send_from_directory = send_from_directory
         self.make_response = make_response
-        self.request = request
+
+    @property
+    def request(self):
+        return request
 
     @property
     def context(self):
@@ -40,11 +42,7 @@ class WebController(BlueprintController):
         if Environ.debug:
             Environ.app.logger.debug(' * Init %s (%s): %a' % (self.import_name, self.name, self.options))
 
-        functions = self.get_functions(WebController)
-        for f in functions:
-            if isinstance(f, LocalProxy):
-                continue
-
+        for f in self.methods:
             _f = f
             if hasattr(f, '__func__'):
                 f = f.__func__

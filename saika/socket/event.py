@@ -27,7 +27,7 @@ class EventSocketController(SocketController):
                 data = common.from_json(data_str)  # type: dict
                 if isinstance(data, dict):
                     event = 'on_%s' % data.pop('event')
-                    if hasattr(self, event) and event not in dir(EventSocketController):
+                    if event not in self.attrs:
                         kwargs = data.pop('data', {})
                         getattr(self, event)(**kwargs)
                         continue

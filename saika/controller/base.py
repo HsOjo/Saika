@@ -23,26 +23,17 @@ class BaseController:
         options = MetaTable.get(self.__class__, hard_code.MK_OPTIONS, {})  # type: dict
         return options
 
-    def get_functions(self, cls_base=None):
-        if cls_base is None:
-            cls_base = BaseController
+    @property
+    def attrs(self):
+        attrs = {}
+        attrs.update(self.__class__.__dict__)
+        attrs.update(self.__dict__)
+        attrs = {k: getattr(self, k) for k, v in attrs.items() if k[0] != '_' and not isinstance(v, property)}
+        return attrs
 
-        functions = []
-
-        keeps = dir(cls_base)
-        for k in dir(self):
-            if k in keeps:
-                continue
-
-            t = getattr(self.__class__, k, None)
-            if isinstance(t, property):
-                continue
-
-            f = getattr(self, k)
-            if callable(f):
-                functions.append(f)
-
-        return functions
+    @property
+    def methods(self):
+        return list(self.attrs.values())
 
     def register(self, *args, **kwargs):
         self.callback_before_register()
