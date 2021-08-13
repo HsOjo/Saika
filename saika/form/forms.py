@@ -41,12 +41,20 @@ class Form(FlaskForm):
             FormField: dict,
         }
 
+        def field_flags(f):
+            flags = []
+            for validator in f.validators:
+                if hasattr(validator, 'field_flags'):
+                    flags += validator.field_flags
+
+            return flags
+
         def dump_field(f):
-            required = False
-            for i in f.validators:
-                if hasattr(i, 'field_flags') and 'required' in i.field_flags:
-                    required = True
-                    break
+            flags = field_flags(f)
+            if isinstance(f, SelectField):
+                required = 'optional' not in flags
+            else:
+                required = 'required' in flags
 
             type_ = types_mapping.get(type(f), object)
             if type_ is object:
