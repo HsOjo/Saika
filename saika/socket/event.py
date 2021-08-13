@@ -24,10 +24,10 @@ class EventSocketController(SocketController):
                 data_str = socket.receive()
                 if not data_str:
                     continue
-                data = json.loads(data_str)  # type: dict
+                data = common.from_json(data_str)  # type: dict
                 if isinstance(data, dict):
                     event = 'on_%s' % data.pop('event')
-                    if hasattr(self, event) and event not in dir(EventSocketController):
+                    if event not in self.attrs:
                         kwargs = data.pop('data', {})
                         getattr(self, event)(**kwargs)
                         continue
@@ -48,7 +48,7 @@ class EventSocketController(SocketController):
         return socket
 
     def send(self, data: dict):
-        self.socket.send(json.dumps(common.obj_standard(data, True, True)))
+        self.socket.send(common.to_json(common.obj_standard(data, True, True)))
 
     def emit(self, event: str, data: dict):
         self.send(dict(event=event, data=data))

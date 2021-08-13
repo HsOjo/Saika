@@ -1,4 +1,4 @@
-from flask_wtf import FlaskForm
+from flask_wtf.form import _Auto, FlaskForm
 from werkzeug.datastructures import MultiDict
 from wtforms import StringField, IntegerField, FieldList, BooleanField, FloatField, FormField, SelectField
 from wtforms_json import flatten_json
@@ -15,6 +15,11 @@ class Form(FlaskForm):
     data: dict
     errors: dict
     form_type = FORM_TYPE_FORM
+
+    def __init__(self, formdata=_Auto, **kwargs):
+        if isinstance(formdata, dict):
+            formdata = MultiDict(formdata)
+        super().__init__(formdata, **kwargs)
 
     def inject_obj_data(self, obj):
         for k in self.data:
@@ -77,14 +82,14 @@ class ArgsForm(Form):
     form_type = FORM_TYPE_ARGS
 
     def __init__(self, **kwargs):
-        super().__init__(MultiDict(Context.request.args), **kwargs)
+        super().__init__(Context.request.args, **kwargs)
 
 
 class ViewArgsForm(Form):
     form_type = FORM_TYPE_REST
 
     def __init__(self, **kwargs):
-        super().__init__(MultiDict(Context.request.view_args), **kwargs)
+        super().__init__(Context.request.view_args, **kwargs)
 
 
 class JSONForm(Form):
@@ -93,5 +98,6 @@ class JSONForm(Form):
     def __init__(self, **kwargs):
         formdata = Context.request.get_json()
         if formdata is not None:
-            formdata = MultiDict(flatten_json(self.__class__, formdata))
+            formdata = flatten_json(self.__class__, formdata)
+
         super().__init__(formdata, **kwargs)

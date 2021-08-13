@@ -4,7 +4,7 @@ from saika import hard_code
 from saika.meta_table import MetaTable
 
 
-class ControllerBase:
+class BaseController:
     def __init__(self):
         name = self.__class__.__name__.replace('Controller', '')
         self._name = re.sub('[A-Z]', lambda x: '_' + x.group().lower(), name).lstrip('_')
@@ -23,26 +23,20 @@ class ControllerBase:
         options = MetaTable.get(self.__class__, hard_code.MK_OPTIONS, {})  # type: dict
         return options
 
-    def instance_register(self, *args, **kwargs):
+    @property
+    def attrs(self):
+        attrs = {}
+        attrs.update(self.__class__.__dict__)
+        attrs.update(self.__dict__)
+        attrs = {k: getattr(self, k) for k, v in attrs.items() if k[0] != '_' and not isinstance(v, property)}
+        return attrs
+
+    @property
+    def methods(self):
+        return list(self.attrs.values())
+
+    def register(self, *args, **kwargs):
+        self.callback_before_register()
+
+    def callback_before_register(self):
         pass
-
-    def get_functions(self, cls=None):
-        if cls is None:
-            cls = ControllerBase
-
-        functions = []
-
-        keeps = dir(cls)
-        for k in dir(self):
-            if k in keeps:
-                continue
-
-            t = getattr(self.__class__, k, None)
-            if isinstance(t, property):
-                continue
-
-            f = getattr(self, k)
-            if callable(f):
-                functions.append(f)
-
-        return functions
