@@ -1,6 +1,7 @@
 import re
 from typing import List
 
+from flask import Response
 from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy, BaseQuery
 from sqlalchemy.engine import Engine
@@ -20,6 +21,14 @@ class Database(SQLAlchemy):
         engine_options.setdefault('json_serializer', common.to_json)
         engine_options.setdefault('json_deserializer', common.from_json)
         super().__init__(*args, **kwargs, engine_options=engine_options)
+
+    def init_app(self, app):
+        @app.after_request
+        def session_commit(resp: Response):
+            self.session.commit()
+            return resp
+
+        super().init_app(app)
 
     def dispose_engine(self, **kwargs):
         engine = self.get_engine(**kwargs)  # type: Engine
