@@ -6,14 +6,15 @@ class Service:
     def __init__(self, model_class):
         self.model_class = model_class
         self.model_pks = db.get_primary_key(model_class)
-        self.order = None
-        self.filter = None
 
-    def set_order(self, *order):
-        self.order = order
+        self.orders = None
+        self.filters = None
 
-    def set_filter(self, *filter):
-        self.filter = filter
+    def set_orders(self, *orders):
+        self.orders = orders
+
+    def set_filters(self, *filters):
+        self.filters = filters
 
     @property
     def query(self):
@@ -22,15 +23,15 @@ class Service:
     @property
     def query_filter(self):
         query = self.query
-        if self.filter:
-            query = query.filter(*self.filter)
+        if self.filters:
+            query = query.filter(*self.filters)
         return query
 
     @property
     def query_order(self):
         query = self.query_filter
-        if self.order:
-            query = query.order_by(*self.order)
+        if self.orders:
+            query = query.order_by(*self.orders)
         return query
 
     @property

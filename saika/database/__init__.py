@@ -7,10 +7,8 @@ from flask_sqlalchemy import SQLAlchemy, BaseQuery
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session
 
-from . import hard_code, common
-from .config import Config
-from .environ import Environ
-from .meta_table import MetaTable
+from saika import hard_code, common
+from saika.meta_table import MetaTable
 
 
 class Database(SQLAlchemy):
@@ -61,7 +59,8 @@ class Database(SQLAlchemy):
 
         return primary, secondary
 
-    def get_query_models(self, query):
+    @staticmethod
+    def get_query_models(query):
         models = [i.get('entity') for i in query.column_descriptions]
         models = [model for model in models if model is not None]
         return models
@@ -159,22 +158,6 @@ class Database(SQLAlchemy):
                 setattr(instance, k, v)
 
         return True
-
-
-@Config.process
-def merge_uri(config):
-    db = Config.section(hard_code.CK_DATABASE)
-    if not db:
-        Environ.app.logger.warning(' * Database config is not defined.')
-        return
-
-    driver = db['driver'].lower()
-    if 'mysql' in driver or 'postgresql' in driver:
-        uri = '%(driver)s://%(user)s:%(password)s@%(host)s:%(port)d/%(database)s?charset=%(charset)s' % db
-    else:
-        uri = '%(driver)s://%(path)s' % db
-
-    config['SQLALCHEMY_DATABASE_URI'] = uri
 
 
 db = Database()
