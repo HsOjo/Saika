@@ -23,7 +23,7 @@ from saika.socket_io import socket_io
 class Saika(CliController):
     """Saika command-line interface, provided some assistant commands."""
 
-    @doc('Doc Generator', 'Generate API document JSON Data.')
+    @doc('Document Generator', 'Generate API document JSON Data.')
     @command
     def docgen(self):
         from saika import common, Environ
@@ -32,15 +32,15 @@ class Saika(CliController):
         validate_default = MetaTable.get(hard_code.MI_GLOBAL, hard_code.MK_FORM_VALIDATE)
 
         docs = {}
-        for controller in app.controllers:
-            if not isinstance(controller, WebController):
+        for _controller in app.controllers:
+            if not isinstance(_controller, WebController):
                 continue
 
-            doc = MetaTable.get(controller.__class__, hard_code.MK_DOCUMENT, dict(name=controller.name)).copy()
-            opts = controller.options
+            _doc = MetaTable.get(_controller.__class__, hard_code.MK_DOCUMENT, dict(name=_controller.name)).copy()
+            opts = _controller.options
 
             api_doc = {}
-            for _func in controller._functions:
+            for _func in _controller._functions:
                 func = _func.__func__
                 metas = MetaTable.all(func)
 
@@ -67,8 +67,8 @@ class Saika(CliController):
                         item.update(rest_args=rest_args)
                     if form_cls:
                         with Environ.app.test_request_context():
-                            form = form_cls()
-                        item.update(validate=validate, form=form.dump_fields(), form_type=form.form_type)
+                            form_ = form_cls()
+                        item.update(validate=validate, form=form_.dump_fields(), form_type=form_.form_type)
 
                     item_id = re.sub(r'[^A-Z]', '_', path.upper()).strip('_')
                     item_id = re.sub(r'_+', '_', item_id)
@@ -77,8 +77,8 @@ class Saika(CliController):
 
                     api_doc[item_id] = item
 
-            doc['function'] = api_doc
-            docs[controller.name] = doc
+            _doc['function'] = api_doc
+            docs[_controller.name] = _doc
 
         docs = common.obj_standard(docs, True, True, True)
         docs_json = common.to_json(docs, indent=2)
@@ -109,8 +109,8 @@ class Saika(CliController):
                 options.pop(k)
 
         if not use_reloader or is_running_from_reloader():
-            print(' * Serving SaikaApp "%s"' % (app.import_name))
-            print('   - Saika Version: %s' % Const.version)
+            print(' * Serving %s "%s"' % (app.__class__.__name__, app.import_name))
+            print('   - %(project_name)s Version: %(version)s' % Const.__dict__)
             print(' * Environment: %s' % app.env)
             if app.env == 'production':
                 print(termcolor.colored(
