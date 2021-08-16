@@ -85,7 +85,13 @@ class Saika(CliController):
 
         print(docs_json)
 
-    @doc('Run', 'Run the Saika Server(Gevent based).')
+    @doc('Config Update', 'Update(Create If Not Existed) Config File.')
+    @command
+    def cfgupd(self):
+        from saika import Environ
+        Environ.save_configs()
+
+    @doc('Run', 'Run the %s Server(Gevent based).' % Const.project_name)
     @command
     @click.option('-h', '--host', default='127.0.0.1')
     @click.option('-p', '--port', default=5000, type=int)

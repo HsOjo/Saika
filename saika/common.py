@@ -58,6 +58,7 @@ def list_group_by(x):
 
 def to_json(obj, **kwargs):
     kwargs.setdefault('ensure_ascii', False)
+    kwargs.setdefault('sort_keys', True)
     return json.dumps(obj, **kwargs)
 
 

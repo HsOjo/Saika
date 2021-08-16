@@ -5,7 +5,7 @@ gevent_patch()
 
 from .cli import Saika
 from .app import SaikaApp
-from .config import Config
+from .config import Config, ConfigProvider, FileProvider
 from .const import Const
 from .context import Context
 from .controller import WebController, APIController, ViewControlller
