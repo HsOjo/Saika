@@ -50,9 +50,13 @@ class Saika(CliController):
 
                 form_cls = metas.get(hard_code.MK_FORM_CLASS)
                 form_args = metas.get(hard_code.MK_FORM_ARGS)  # type: dict
+
+                # 从所有API方法遍历，故存在部分无表单API
                 form_validate = None
-                if form_args:
-                    form_validate = form_args.get(hard_code.AK_VALIDATE, validate_default)
+                if form_args is not None:
+                    form_validate = form_args.get(hard_code.AK_VALIDATE)
+                    if form_validate is None:
+                        form_validate = validate_default
 
                 rest, rest_args = common.rule_to_rest(rule_str)
                 path = '%s%s' % (url_prefix, rest)
