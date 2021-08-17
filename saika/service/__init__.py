@@ -69,22 +69,25 @@ class Service:
             lambda query: query.filter(self.pk_filter(id))
         ).first()
 
+    def items(self, id, *ids, query_processes=(), **kwargs):
+        return self._process_query(
+            self.query_order, *query_processes,
+            lambda query: query.filter(self.pk_filter(id, *ids))
+        ).all()
+
     def add(self, **kwargs):
         model = self.model_class(**kwargs)
         db.add_instance(model)
         return model
 
-    def edit(self, *ids, query_processes=(), **kwargs):
+    def edit(self, id, *ids, query_processes=(), **kwargs):
         return self._process_query(
             self.query_filter, *query_processes,
-            lambda query: query.filter(self.pk_filter(*ids))
+            lambda query: query.filter(self.pk_filter(id, *ids))
         ).update(kwargs)
 
-    def delete(self, *ids, query_processes=(), **kwargs):
-        if not ids:
-            return 0
-
+    def delete(self, id, *ids, query_processes=(), **kwargs):
         return self._process_query(
             self.query_filter, *query_processes,
-            lambda query: query.filter(self.pk_filter(*ids))
+            lambda query: query.filter(self.pk_filter(id, *ids))
         ).delete()
