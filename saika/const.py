@@ -1,5 +1,7 @@
 class Const:
-    version = '0.2.1'
+    project_name = 'Saika'
+    author = 'HsOjo'
+    version = '0.2.2'
 
     config_file = 'config.json'
     data_dir = 'data'

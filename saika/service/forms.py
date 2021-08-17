@@ -62,7 +62,7 @@ class AdvancedPaginateForm(PaginateForm):
     filters = FieldList(FormField(FieldOperateForm))
     orders = FieldList(FormField(FieldOperateForm))
 
-    def query(self, query, model=None):
+    def query_process(self, query, model=None):
         query: BaseQuery
         if model is None:
             model = db.get_query_models(query)[0]

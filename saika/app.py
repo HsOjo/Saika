@@ -6,12 +6,12 @@ import re
 import signal
 import sys
 import traceback
-from typing import List
+from typing import List, Optional
 
 from flask import Flask
 
-from . import hard_code
-from .config import Config
+from . import hard_code, decorator
+from .config import Config, ConfigProvider, FileProvider, FreeConfig
 from .const import Const
 from .context import Context
 from .controller import BaseController, CliController
@@ -39,14 +39,18 @@ class SaikaApp(Flask):
         self.set_fork_killer = set_fork_killer
 
         self._controllers = []  # type: List[BaseController]
+        self._configs = {}  # type: dict
+
+        self._config_provider_default = None  # type: Optional[ConfigProvider]
 
         try:
             self._init_env()
-            self._init_config()
-            self._init_app()
 
             if import_modules:
                 self._import_modules()
+
+            self._init_configs()
+            self._init_app()
             self._init_callbacks()
             self._init_context()
             self._init_controllers()
@@ -56,7 +60,7 @@ class SaikaApp(Flask):
 
     def _init_env(self):
         if Environ.app is not None:
-            raise Exception('SaikaApp was created.')
+            raise Exception('%s was created.' % SaikaApp.__name__)
 
         Environ.app = self
         Environ.debug = bool(int(os.getenv(hard_code.SAIKA_DEBUG, 0)))
@@ -74,20 +78,27 @@ class SaikaApp(Flask):
         Environ.config_path = os.path.join(Environ.program_path, Const.config_file)
         Environ.data_path = os.path.abspath(os.path.join(Environ.program_path, Const.data_dir))
 
-    def _init_config(self):
-        Config.load()
-        cfg = Config.merge()
-        self.config.from_mapping(cfg)
+    def _init_configs(self):
+        if self._config_provider_default is None:
+            self._config_provider_default = FileProvider(Environ.config_path)
+
+        config_classes = MetaTable.get(hard_code.MI_GLOBAL, hard_code.MK_CONFIG_CLASSES, [])
+        for cls in config_classes:
+            if issubclass(cls, Config):
+                cfg = cls()
+                provider = MetaTable.get(cls, hard_code.MK_CONFIG_PROVIDER)
+                if provider is None:
+                    provider = self._config_provider_default
+                cfg.set_provider(provider)
+                cfg.refresh()
+                self._configs[cls] = cfg
+        self.load_configs()
 
     def _init_app(self):
         db.init_app(self)
         migrate.init_app(self, db, render_as_batch=True)
-        cors.init_app(self, **(Config.section('cors') or dict(
-            supports_credentials=True,
-        )))
-        socket_io.init_app(self, **(Config.section('socket_io') or dict(
-            cors_allowed_origins='*',
-        )))
+        cors.init_app(self)
+        socket_io.init_app(self)
         socket.init_app(self)
         self.callback_init_app()
 
@@ -165,9 +176,9 @@ class SaikaApp(Flask):
                     if k in sub_module_name_l:
                         sub_modules_import.append('%s.%s' % (module_name, sub_module.name))
 
-        def import_module(module_name):
+        def import_module(module_name_):
             try:
-                importlib.import_module(module_name)
+                importlib.import_module(module_name_)
             except Exception as e:
                 Environ.app.logger.error(e)
 
@@ -181,7 +192,7 @@ class SaikaApp(Flask):
     def callback_init_app(self):
         pass
 
-    def reload(self):
+    def restart(self):
         if Environ.is_gunicorn():
             os.kill(os.getppid(), signal.SIGHUP)
         else:
@@ -190,6 +201,22 @@ class SaikaApp(Flask):
     @property
     def controllers(self):
         return self._controllers
+
+    @property
+    def configs(self):
+        return self._configs
+
+    def load_configs(self):
+        for config in self._configs.values():
+            options = config.merge()
+            if options is not None:
+                self.config.update(options)
+
+
+@decorator.config
+class FlaskConfig(FreeConfig):
+    SECRET_KEY = Const.project_name
+    WTF_CSRF_ENABLED = False
 
 
 def make_context():

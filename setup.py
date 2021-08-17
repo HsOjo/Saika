@@ -10,15 +10,15 @@ with open("requirements.txt", "r") as fh:
     requirements = fh.read().splitlines()
 
 setuptools.setup(
-    name="Saika",
+    name=Const.project_name,
     version=Const.version,
-    author="HsOjo",
+    author=Const.author,
     author_email="hsojo@qq.com",
     keywords='hsojo python3 flask web',
     description='''A simple web framework base on Flask.''',
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/HsOjo/Saika/",
+    url="https://github.com/%(author)s/%(project_name)s/" % Const.__dict__,
     packages=setuptools.find_packages(),
     include_package_data=True,
     classifiers=[

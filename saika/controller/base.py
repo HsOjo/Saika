@@ -25,15 +25,17 @@ class BaseController:
 
     @property
     def attrs(self):
-        attrs = {}
-        attrs.update(self.__class__.__dict__)
-        attrs.update(self.__dict__)
-        attrs = {k: getattr(self, k) for k, v in attrs.items() if k[0] != '_' and not isinstance(v, property)}
-        return attrs
+        keys = []
+        for parent_cls in self.__class__.__mro__[0:-2]:
+            for k, v in parent_cls.__dict__.items():
+                if k[0] != '_' and not isinstance(v, property):
+                    keys.append(k)
+
+        return {k: getattr(self, k) for k in set(keys)}
 
     @property
     def methods(self):
-        return list(self.attrs.values())
+        return [method for method in self.attrs.values() if callable(method)]
 
     def register(self, *args, **kwargs):
         self.callback_before_register()
