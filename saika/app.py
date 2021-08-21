@@ -11,7 +11,7 @@ from typing import List, Optional
 from flask import Flask
 
 from . import hard_code, decorator
-from .config import Config, ConfigProvider, FileProvider, FreeConfig
+from .config import BaseConfig, ConfigProvider, FileProvider, FreeConfig
 from .const import Const
 from .context import Context
 from .controller import BaseController, CliController
@@ -84,7 +84,7 @@ class SaikaApp(Flask):
 
         config_classes = MetaTable.get(hard_code.MI_GLOBAL, hard_code.MK_CONFIG_CLASSES, [])
         for cls in config_classes:
-            if issubclass(cls, Config):
+            if issubclass(cls, BaseConfig):
                 cfg = cls()
                 provider = MetaTable.get(cls, hard_code.MK_CONFIG_PROVIDER)
                 if provider is None:
@@ -220,7 +220,7 @@ class FlaskConfig(FreeConfig):
 
 
 def make_context():
-    context = dict(Config=Config, Const=Const, Context=Context, db=db, Environ=Environ, MetaTable=MetaTable)
+    context = dict(Config=BaseConfig, Const=Const, Context=Context, db=db, Environ=Environ, MetaTable=MetaTable)
     classes = MetaTable.get(hard_code.MI_GLOBAL, hard_code.MK_MODEL_CLASSES, [])
     for cls in classes:
         context[cls.__name__] = cls

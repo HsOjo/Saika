@@ -1,7 +1,7 @@
-from saika import Config
+from saika import BaseConfig
 
 
-class DatabaseConfig(Config):
+class DatabaseConfig(BaseConfig):
     driver = 'sqlite'
     query_args = {}
 

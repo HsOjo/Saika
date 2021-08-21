@@ -1,9 +1,9 @@
 import re
 
-import saika
+from .provider import ConfigProvider
 
 
-class Config:
+class BaseConfig:
     __disabled_keys__ = []
 
     def __init__(self):
@@ -21,7 +21,7 @@ class Config:
 
     def set_provider(self, provider):
         if self._provider is None:
-            self._provider = provider  # type: saika.ConfigProvider
+            self._provider = provider  # type: ConfigProvider
             self._provider.attach(self)
 
     def load(self, **options):
