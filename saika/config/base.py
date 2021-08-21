@@ -35,6 +35,7 @@ class BaseConfig:
             options = self.provider.get(self.section)
             if options:
                 self.load(**options)
+        return self
 
     def merge(self) -> dict:
         """Merge config to flask config."""
@@ -55,6 +56,10 @@ class BaseConfig:
     @property
     def data_all(self):
         return {k: getattr(self, k) for k in self.keys}
+
+    @property
+    def data_now(self):
+        return self.refresh().data
 
     @property
     def provider(self):

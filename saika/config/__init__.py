@@ -18,8 +18,7 @@ class Config:
     @staticmethod
     def get(config_cls):
         config = Environ.app.configs[config_cls]  # type: BaseConfig
-        config.refresh()
-        return config
+        return config.refresh()
 
     @staticmethod
     def save(*configs):
