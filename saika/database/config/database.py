@@ -7,8 +7,8 @@ class DatabaseConfig(BaseConfig):
 
     echo_sql = False
 
-    pool_size = 5
-    pool_timeout = 10
+    pool_size = None
+    pool_timeout = None
 
     track_modifications = False
 

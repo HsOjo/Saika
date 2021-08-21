@@ -18,10 +18,11 @@ class FileProvider(ConfigProvider):
 
     def check_time_reload(self):
         with self._time_lock:
-            mtime = os.path.getmtime(self._path)
-            if mtime != self._mtime:
-                self._mtime = mtime
-                self.load()
+            if os.path.exists(self._path):
+                mtime = os.path.getmtime(self._path)
+                if mtime != self._mtime:
+                    self._mtime = mtime
+                    self.load()
 
     def get(self, section) -> dict:
         self.check_time_reload()
