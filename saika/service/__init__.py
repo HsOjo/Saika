@@ -59,17 +59,20 @@ class Service:
         return query
 
     def list(self, page, per_page, query_processes=(), **kwargs):
+        db.session.commit()
         return self._process_query(
             self.query_order, *query_processes
         ).paginate(page, per_page)
 
     def item(self, id, query_processes=(), **kwargs):
+        db.session.commit()
         return self._process_query(
             self.query_filter, *query_processes,
             lambda query: query.filter(self.pk_filter(id))
         ).first()
 
     def items(self, id, *ids, query_processes=(), **kwargs):
+        db.session.commit()
         return self._process_query(
             self.query_order, *query_processes,
             lambda query: query.filter(self.pk_filter(id, *ids))
@@ -81,13 +84,17 @@ class Service:
         return model
 
     def edit(self, id, *ids, query_processes=(), **kwargs):
-        return self._process_query(
+        result = self._process_query(
             self.query_filter, *query_processes,
             lambda query: query.filter(self.pk_filter(id, *ids))
         ).update(kwargs)
+        db.session.commit()
+        return result
 
     def delete(self, id, *ids, query_processes=(), **kwargs):
-        return self._process_query(
+        result = self._process_query(
             self.query_filter, *query_processes,
             lambda query: query.filter(self.pk_filter(id, *ids))
         ).delete()
+        db.session.commit()
+        return result
