@@ -9,6 +9,7 @@ from termcolor import colored
 from werkzeug.serving import is_running_from_reloader
 
 from saika import hard_code
+from saika.config import Config
 from saika.const import Const
 from saika.context import Context
 from saika.controller.cli import CliController
@@ -85,15 +86,14 @@ class Saika(CliController):
             docs[_controller.name] = _doc
 
         docs = common.obj_standard(docs, True, True, True)
-        docs_json = common.to_json(docs, indent=2)
+        docs_json = common.to_json(docs, indent=2, sort_keys=True)
 
         print(docs_json)
 
     @doc('Config Update', 'Update(Create If Not Existed) Config File.')
     @command
     def cfgupd(self):
-        from saika import Environ
-        Environ.save_configs()
+        Config.save()
 
     @doc('Run', 'Run the %s Server(Gevent based).' % Const.project_name)
     @command
