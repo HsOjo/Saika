@@ -27,11 +27,28 @@ from .workers import set_fork_killer
 
 
 class SaikaApp(Flask):
+    _init_args = None
+    _instance = None
+
+    def __new__(cls, *args, **kwargs):
+        if cls._instance is None:
+            obj = object.__new__(cls)
+            cls._instance = obj
+        return cls._instance
+
     def __init__(self, import_name=None, import_modules=True, **kwargs):
+        if Environ.app is self:
+            self.import_name = import_name
+            return
+
         if import_name is None:
             if self.__class__ is SaikaApp:
                 raise Exception('Must set import_name.')
             import_name = self.__class__.__module__
+
+        self._module = importlib.import_module(import_name)
+        self._module.__spec__ = None
+        os.environ.setdefault('FLASK_APP', os.path.basename(self._module.__file__))
 
         super().__init__(import_name, **kwargs)
 
@@ -60,12 +77,12 @@ class SaikaApp(Flask):
 
     def _init_env(self):
         if Environ.app is not None:
-            raise Exception('%s was created.' % SaikaApp.__name__)
+            raise Exception('''%s doesn't support multiple instance.''' % SaikaApp.__name__)
 
         Environ.app = self
         Environ.debug = bool(int(os.getenv(hard_code.SAIKA_DEBUG, 0)))
 
-        app_path = sys.modules[self.import_name].__file__
+        app_path = importlib.import_module(self.import_name).__file__
         if os.path.exists(app_path):
             app_dir = os.path.dirname(app_path)
             if '__init__' in os.path.basename(app_path):
