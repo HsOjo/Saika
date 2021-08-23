@@ -48,7 +48,9 @@ class SaikaApp(Flask):
 
         self._module = importlib.import_module(import_name)
         self._module.__spec__ = None
-        os.environ.setdefault('FLASK_APP', os.path.basename(self._module.__file__))
+
+        if import_name == '__main__':
+            os.environ.setdefault('FLASK_APP', os.path.basename(self._module.__file__))
 
         super().__init__(import_name, **kwargs)
 
