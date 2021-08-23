@@ -9,9 +9,10 @@ import traceback
 from typing import List, Optional
 
 from flask import Flask
+from flask.cli import FlaskGroup
 
-from . import hard_code, decorator
-from .config import BaseConfig, ConfigProvider, FileProvider, FreeConfig
+from . import hard_code
+from .config import Config, BaseConfig, ConfigProvider, FileProvider
 from .const import Const
 from .context import Context
 from .controller import BaseController, CliController
@@ -48,6 +49,7 @@ class SaikaApp(Flask):
 
         self._module = importlib.import_module(import_name)
         self._module.__spec__ = None
+        self._sub_modules = []
 
         if import_name == '__main__':
             os.environ.setdefault('FLASK_APP', os.path.basename(self._module.__file__))
@@ -198,6 +200,7 @@ class SaikaApp(Flask):
         def import_module(module_name_):
             try:
                 importlib.import_module(module_name_)
+                self._sub_modules.append(module_name_)
             except Exception as e:
                 Environ.app.logger.error(e)
 
@@ -225,6 +228,15 @@ class SaikaApp(Flask):
     def configs(self):
         return self._configs
 
+    @property
+    def sub_modules(self):
+        return self._sub_modules
+
+    @property
+    def flask_cli(self):
+        with self.app_context():
+            return FlaskGroup()
+
     def load_configs(self):
         for config in self._configs.values():
             options = config.merge()
@@ -232,14 +244,8 @@ class SaikaApp(Flask):
                 self.config.update(options)
 
 
-@decorator.config
-class FlaskConfig(FreeConfig):
-    SECRET_KEY = Const.project_name
-    WTF_CSRF_ENABLED = False
-
-
 def make_context():
-    context = dict(Config=BaseConfig, Const=Const, Context=Context, db=db, Environ=Environ, MetaTable=MetaTable)
+    context = dict(Config=Config, Const=Const, Context=Context, db=db, Environ=Environ, MetaTable=MetaTable)
     classes = MetaTable.get(hard_code.MI_GLOBAL, hard_code.MK_MODEL_CLASSES, [])
     for cls in classes:
         context[cls.__name__] = cls

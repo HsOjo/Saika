@@ -2,7 +2,7 @@ import re
 
 import click
 
-from saika import hard_code
+from saika import hard_code, common
 from saika.config import Config
 from saika.const import Const
 from saika.controller.cli import CliController
@@ -20,8 +20,7 @@ class Saika(CliController):
     @doc('Document Generator', 'Generate API document JSON Data.')
     @command
     def docgen(self):
-        from saika import common, Environ
-        app = Environ.app
+        app = self.app
 
         validate_default = MetaTable.get(hard_code.MI_GLOBAL, hard_code.MK_FORM_VALIDATE)
 
@@ -64,7 +63,7 @@ class Saika(CliController):
                     if rest_args:
                         item.update(rest_args=rest_args)
                     if form_cls:
-                        with Environ.app.test_request_context():
+                        with app.test_request_context():
                             form_ = form_cls()
                         item.update(validate=validate, form=form_.dump_fields(), form_type=form_.form_type)
 
@@ -81,24 +80,40 @@ class Saika(CliController):
         docs = common.obj_standard(docs, True, True, True)
         docs_json = common.to_json(docs, indent=2, sort_keys=True)
 
-        print(docs_json)
+        click.echo(docs_json)
 
     @doc('Config Update', 'Update(Create If Not Existed) Config File.')
     @command
     def cfgupd(self):
         Config.save()
+        click.echo('Update Finished.')
 
-    @doc('Run', 'Run the %s Server.' % Const.project_name)
+    @doc('List Modules', 'Use for Packing...(Such as PyInstaller).')
+    @command
+    def lsmods(self):
+        modules = [
+            'engineio.async_drivers.gevent',
+            'gunicorn.glogging'
+        ]
+        modules += self.app.sub_modules
+        click.echo(modules)
+
+    @doc('Run', 'The Ultra %s Web Server.' % Const.project_name)
     @command
     @click.option('-h', '--host', default='127.0.0.1')
     @click.option('-p', '--port', default=5000, type=int)
-    @click.option('-t', '--type', default=TYPE_GEVENT, type=click.Choice([TYPE_GEVENT, TYPE_GUNICORN]))
-    @click.option('--debug', is_flag=True)
-    @click.option('--use-reloader', is_flag=True)
-    @click.option('--ssl-crt', default=None)
-    @click.option('--ssl-key', default=None)
+    @click.option('-t', '--type', default=None, type=click.Choice([TYPE_GEVENT, TYPE_GUNICORN]))
+    @click.option('-d', '--debug', is_flag=True)
+    @click.option('-r', '--use-reloader', is_flag=True)
+    @click.option('-c', '--ssl-crt', default=None)
+    @click.option('-k', '--ssl-key', default=None)
     def run(self, host, port, type, debug, use_reloader, ssl_crt, ssl_key, **kwargs):
-        from saika import Environ
-        SERVER_MAPPING[type](Environ.app).run(
+        if type is None:
+            if self.app.env == 'production':
+                type = TYPE_GUNICORN
+            else:
+                type = TYPE_GEVENT
+
+        SERVER_MAPPING[type](self.app).run(
             host, port, debug, use_reloader, ssl_crt, ssl_key, **kwargs
         )

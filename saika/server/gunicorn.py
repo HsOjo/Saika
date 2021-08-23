@@ -6,6 +6,9 @@ from saika.server.base import BaseServer
 
 
 class GunicornApp(BaseApplication):
+    def init(self, parser, opts, args):
+        pass
+
     def __init__(self, app, config):
         self._config = config
         self._app = app
