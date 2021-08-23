@@ -9,9 +9,10 @@ import traceback
 from typing import List, Optional
 
 from flask import Flask
+from flask.cli import FlaskGroup
 
-from . import hard_code, decorator
-from .config import Config, ConfigProvider, FileProvider, FreeConfig
+from . import hard_code
+from .config import Config, BaseConfig, ConfigProvider, FileProvider
 from .const import Const
 from .context import Context
 from .controller import BaseController, CliController
@@ -27,11 +28,31 @@ from .workers import set_fork_killer
 
 
 class SaikaApp(Flask):
+    _init_args = None
+    _instance = None
+
+    def __new__(cls, *args, **kwargs):
+        if cls._instance is None:
+            obj = object.__new__(cls)
+            cls._instance = obj
+        return cls._instance
+
     def __init__(self, import_name=None, import_modules=True, **kwargs):
+        if Environ.app is self:
+            self.import_name = import_name
+            return
+
         if import_name is None:
             if self.__class__ is SaikaApp:
                 raise Exception('Must set import_name.')
             import_name = self.__class__.__module__
+
+        self._module = importlib.import_module(import_name)
+        self._module.__spec__ = None
+        self._sub_modules = []
+
+        if import_name == '__main__':
+            os.environ.setdefault('FLASK_APP', os.path.basename(self._module.__file__))
 
         super().__init__(import_name, **kwargs)
 
@@ -60,12 +81,12 @@ class SaikaApp(Flask):
 
     def _init_env(self):
         if Environ.app is not None:
-            raise Exception('%s was created.' % SaikaApp.__name__)
+            raise Exception('''%s doesn't support multiple instance.''' % SaikaApp.__name__)
 
         Environ.app = self
         Environ.debug = bool(int(os.getenv(hard_code.SAIKA_DEBUG, 0)))
 
-        app_path = sys.modules[self.import_name].__file__
+        app_path = importlib.import_module(self.import_name).__file__
         if os.path.exists(app_path):
             app_dir = os.path.dirname(app_path)
             if '__init__' in os.path.basename(app_path):
@@ -84,7 +105,7 @@ class SaikaApp(Flask):
 
         config_classes = MetaTable.get(hard_code.MI_GLOBAL, hard_code.MK_CONFIG_CLASSES, [])
         for cls in config_classes:
-            if issubclass(cls, Config):
+            if issubclass(cls, BaseConfig):
                 cfg = cls()
                 provider = MetaTable.get(cls, hard_code.MK_CONFIG_PROVIDER)
                 if provider is None:
@@ -179,6 +200,7 @@ class SaikaApp(Flask):
         def import_module(module_name_):
             try:
                 importlib.import_module(module_name_)
+                self._sub_modules.append(module_name_)
             except Exception as e:
                 Environ.app.logger.error(e)
 
@@ -206,17 +228,20 @@ class SaikaApp(Flask):
     def configs(self):
         return self._configs
 
+    @property
+    def sub_modules(self):
+        return self._sub_modules
+
+    @property
+    def flask_cli(self):
+        with self.app_context():
+            return FlaskGroup()
+
     def load_configs(self):
         for config in self._configs.values():
             options = config.merge()
             if options is not None:
                 self.config.update(options)
-
-
-@decorator.config
-class FlaskConfig(FreeConfig):
-    SECRET_KEY = Const.project_name
-    WTF_CSRF_ENABLED = False
 
 
 def make_context():

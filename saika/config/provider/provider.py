@@ -5,7 +5,7 @@ import saika
 
 class ConfigProvider:
     def __init__(self):
-        self._configs = []  # type: List[saika.Config]
+        self._configs = []  # type: List[saika.BaseConfig]
         self._data = {}
 
     def get(self, section) -> dict:

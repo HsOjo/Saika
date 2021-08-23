@@ -23,19 +23,3 @@ class Environ:
     @staticmethod
     def is_gunicorn():
         return "gunicorn" in os.environ.get("SERVER_SOFTWARE", "")
-
-    @staticmethod
-    def get_config(config_cls):
-        config = Environ.app.configs[config_cls]  # type: saika.Config
-        config.refresh()
-        return config
-
-    @staticmethod
-    def save_configs(*configs):
-        if not configs:
-            configs = Environ.app.configs.values()
-
-        providers = set([config.provider for config in configs])
-        for provider in providers:
-            provider: saika.ConfigProvider
-            provider.save()

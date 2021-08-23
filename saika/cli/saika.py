@@ -1,22 +1,16 @@
 import re
-import sys
-import time
 
 import click
-import termcolor
-from flask import Response
-from termcolor import colored
-from werkzeug.serving import is_running_from_reloader
 
-from saika import hard_code
+from saika import hard_code, common
+from saika.config import Config
 from saika.const import Const
-from saika.context import Context
 from saika.controller.cli import CliController
 from saika.controller.web import WebController
 from saika.decorator import *
 from saika.form import AUTO
 from saika.meta_table import MetaTable
-from saika.socket_io import socket_io
+from saika.server import *
 
 
 @controller
@@ -26,8 +20,7 @@ class Saika(CliController):
     @doc('Document Generator', 'Generate API document JSON Data.')
     @command
     def docgen(self):
-        from saika import common, Environ
-        app = Environ.app
+        app = self.app
 
         validate_default = MetaTable.get(hard_code.MI_GLOBAL, hard_code.MK_FORM_VALIDATE)
 
@@ -70,7 +63,7 @@ class Saika(CliController):
                     if rest_args:
                         item.update(rest_args=rest_args)
                     if form_cls:
-                        with Environ.app.test_request_context():
+                        with app.test_request_context():
                             form_ = form_cls()
                         item.update(validate=validate, form=form_.dump_fields(), form_type=form_.form_type)
 
@@ -85,65 +78,42 @@ class Saika(CliController):
             docs[_controller.name] = _doc
 
         docs = common.obj_standard(docs, True, True, True)
-        docs_json = common.to_json(docs, indent=2)
+        docs_json = common.to_json(docs, indent=2, sort_keys=True)
 
-        print(docs_json)
+        click.echo(docs_json)
 
     @doc('Config Update', 'Update(Create If Not Existed) Config File.')
     @command
     def cfgupd(self):
-        from saika import Environ
-        Environ.save_configs()
+        Config.save()
+        click.echo('Update Finished.')
 
-    @doc('Run', 'Run the %s Server(Gevent based).' % Const.project_name)
+    @doc('List Modules', 'Use for Packing...(Such as PyInstaller).')
+    @command
+    def lsmods(self):
+        modules = [
+            'engineio.async_drivers.gevent',
+            'gunicorn.glogging'
+        ]
+        modules += self.app.sub_modules
+        click.echo(modules)
+
+    @doc('Run', 'The Ultra %s Web Server.' % Const.project_name)
     @command
     @click.option('-h', '--host', default='127.0.0.1')
     @click.option('-p', '--port', default=5000, type=int)
-    @click.option('--debug', is_flag=True)
-    @click.option('--use-reloader', is_flag=True)
-    @click.option('--ssl-crt', default=None)
-    @click.option('--ssl-key', default=None)
-    def run(self, host, port, debug, use_reloader, ssl_crt, ssl_key):
-        from saika import Environ
-        app = Environ.app
+    @click.option('-t', '--type', default=None, type=click.Choice([TYPE_GEVENT, TYPE_GUNICORN]))
+    @click.option('-d', '--debug', is_flag=True)
+    @click.option('-r', '--use-reloader', is_flag=True)
+    @click.option('-c', '--ssl-crt', default=None)
+    @click.option('-k', '--ssl-key', default=None)
+    def run(self, host, port, type, debug, use_reloader, ssl_crt, ssl_key, **kwargs):
+        if type is None:
+            if self.app.env == 'production':
+                type = TYPE_GUNICORN
+            else:
+                type = TYPE_GEVENT
 
-        options = dict(debug=debug, use_reloader=use_reloader, certfile=ssl_crt, keyfile=ssl_key)
-        for k, v in list(options.items()):
-            if v is None:
-                options.pop(k)
-
-        if not use_reloader or is_running_from_reloader():
-            print(' * Serving %s "%s"' % (app.__class__.__name__, app.import_name))
-            print('   - %(project_name)s Version: %(version)s' % Const.__dict__)
-            print(' * Environment: %s' % app.env)
-            if app.env == 'production':
-                print(termcolor.colored(
-                    "   WARNING: This is a development server. "
-                    "Do not use it in a production deployment.\n"
-                    "   Use a production WSGI server instead.",
-                    color="red")
-                )
-            print(' * Debug mode: %s' % ('on' if app.debug else 'off'))
-            print(' * Running on http://%s:%s/ (Press CTRL+C to quit)' % (host, port))
-
-        @app.after_request
-        def print_log(resp: Response):
-            req = Context.request
-            color = 'yellow' if resp.status_code != 200 else 'grey'
-            print('%(remote_addr)s - - [%(time)s] "%(request)s" %(status_code)s' % dict(
-                remote_addr=req.remote_addr,
-                time=time.strftime('%d/%b/%Y %H:%M:%S'),
-                request=colored('%(method)s %(path)s %(protocol)s' % dict(
-                    method=req.method,
-                    path=req.path,
-                    protocol=req.environ.get('SERVER_PROTOCOL'),
-                ), color),
-                status_code=resp.status_code,
-            ), file=sys.stderr)
-            return resp
-
-        socket_io.server.eio.async_mode = 'gevent'
-        try:
-            socket_io.run(app, host, port, log_output=True, **options)
-        except KeyboardInterrupt:
-            pass
+        SERVER_MAPPING[type](self.app).run(
+            host, port, debug, use_reloader, ssl_crt, ssl_key, **kwargs
+        )

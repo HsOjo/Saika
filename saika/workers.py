@@ -11,7 +11,7 @@ try:
 
     class SaikaWorker(GeventWebSocketWorker):
         def notify(self):
-            super(AsyncWorker, self).notify()
+            AsyncWorker.notify(self)
             if fork_killer:
                 # Fix fork child process from self.
                 ppid = os.getppid()

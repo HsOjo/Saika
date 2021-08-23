@@ -1,7 +1,7 @@
-from .config import Config
+from .base import BaseConfig
 
 
-class FreeConfig(Config):
+class FreeConfig(BaseConfig):
     def load(self, **options):
         for k, v in options.items():
             setattr(self, k, v)

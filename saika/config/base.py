@@ -1,9 +1,9 @@
 import re
 
-import saika
+from .provider import ConfigProvider
 
 
-class Config:
+class BaseConfig:
     __disabled_keys__ = []
 
     def __init__(self):
@@ -21,7 +21,7 @@ class Config:
 
     def set_provider(self, provider):
         if self._provider is None:
-            self._provider = provider  # type: saika.ConfigProvider
+            self._provider = provider  # type: ConfigProvider
             self._provider.attach(self)
 
     def load(self, **options):
@@ -35,6 +35,7 @@ class Config:
             options = self.provider.get(self.section)
             if options:
                 self.load(**options)
+        return self
 
     def merge(self) -> dict:
         """Merge config to flask config."""
@@ -55,6 +56,10 @@ class Config:
     @property
     def data_all(self):
         return {k: getattr(self, k) for k in self.keys}
+
+    @property
+    def data_now(self):
+        return self.refresh().data
 
     @property
     def provider(self):
