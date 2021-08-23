@@ -2,6 +2,7 @@ from typing import List, Dict
 
 from saika.environ import Environ
 from .base import BaseConfig
+from .flask import FlaskConfig
 from .free import FreeConfig
 from .provider import *
 
