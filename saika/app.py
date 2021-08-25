@@ -1,7 +1,6 @@
 import builtins
 import importlib
 import os
-import pkgutil
 import re
 import signal
 import sys
@@ -11,7 +10,7 @@ from typing import List, Optional
 from flask import Flask
 from flask.cli import FlaskGroup
 
-from . import hard_code
+from . import hard_code, common
 from .config import Config, BaseConfig, ConfigProvider, FileProvider
 from .const import Const
 from .context import Context
@@ -86,18 +85,22 @@ class SaikaApp(Flask):
         Environ.app = self
         Environ.debug = bool(int(os.getenv(hard_code.SAIKA_DEBUG, 0)))
 
-        app_path = importlib.import_module(self.import_name).__file__
-        if os.path.exists(app_path):
-            app_dir = os.path.dirname(app_path)
-            if '__init__' in os.path.basename(app_path):
-                Environ.program_path = os.path.abspath(os.path.join(app_dir, '..'))
-            else:
-                Environ.program_path = app_dir
+        if Environ.is_pyinstaller():
+            Environ.program_dir = os.path.dirname(sys.argv[0])
         else:
-            Environ.program_path = self.root_path
+            app_path = importlib.import_module(self.import_name).__file__
+            if os.path.exists(app_path):
+                app_dir = os.path.dirname(app_path)
+                if '__init__' in os.path.basename(app_path):
+                    Environ.program_dir = os.path.abspath(os.path.join(app_dir, '..'))
+                else:
+                    Environ.program_dir = app_dir
+            else:
+                Environ.program_dir = self.root_path
 
-        Environ.config_path = os.path.join(Environ.program_path, Const.config_file)
-        Environ.data_path = os.path.abspath(os.path.join(Environ.program_path, Const.data_dir))
+        Environ.config_path = os.path.join(Environ.program_dir, Const.config_file)
+        Environ.data_dir = os.path.abspath(os.path.join(Environ.program_dir, Const.data_dir))
+        os.makedirs(Environ.data_dir, exist_ok=True)
 
     def _init_configs(self):
         if self._config_provider_default is None:
@@ -113,6 +116,9 @@ class SaikaApp(Flask):
                 cfg.set_provider(provider)
                 cfg.refresh()
                 self._configs[cls] = cfg
+
+        self.config.setdefault('SQLALCHEMY_DATABASE_URI', "sqlite:///:memory:")
+        self.config.setdefault('SQLALCHEMY_TRACK_MODIFICATIONS', True)
         self.load_configs()
 
     def _init_app(self):
@@ -168,7 +174,7 @@ class SaikaApp(Flask):
         for key in dir(builtins):
             item = getattr(builtins, key)
             is_builtin = type(item).__name__ == 'builtin_function_or_method'
-            if key[0] != '_' and hasattr(item, '__name__') and (is_builtin or re.match('^[a-z]+$', key)):
+            if not key.startswith('_') and hasattr(item, '__name__') and (is_builtin or re.match('^[a-z]+$', key)):
                 items.append(item)
 
         for item in items:
@@ -176,40 +182,17 @@ class SaikaApp(Flask):
 
         self.shell_context_processor(make_context)
 
-    def _import_modules(self, module_name=None):
-        if module_name is None:
-            module_name = self.__class__.__module__
-
-        module = sys.modules.get(module_name)
-        if module is None or module_name.startswith('saika'):
+    def _import_modules(self):
+        app_module = importlib.import_module(self.__class__.__module__)
+        if app_module is None or app_module.__name__.startswith(Const.project_name.lower()):
             return
-        module_dir = os.path.dirname(module.__file__)
 
-        sub_modules = list(pkgutil.iter_modules([module_dir]))
-        sub_pkgs = []
-        sub_modules_import = []
-        for sub_module in sub_modules:
-            if sub_module.ispkg:
-                sub_pkgs.append('%s.%s' % (module_name, sub_module.name))
-            else:
-                sub_module_name_l = sub_module.name.lower()
-                for k in ['controller', 'model']:
-                    if k in sub_module_name_l:
-                        sub_modules_import.append('%s.%s' % (module_name, sub_module.name))
-
-        def import_module(module_name_):
-            try:
-                importlib.import_module(module_name_)
-                self._sub_modules.append(module_name_)
-            except Exception as e:
-                Environ.app.logger.error(e)
-
-        for sub_pkg in sub_pkgs:
-            import_module(sub_pkg)
-            self._import_modules(sub_pkg)
-
-        for sub_module in sub_modules_import:
-            import_module(sub_module)
+        keywords = ['controller', 'model', 'config']
+        for module_name in common.walk_modules(app_module):
+            for keyword in keywords:
+                if keyword in module_name:
+                    importlib.import_module(module_name)
+            self._sub_modules.append(module_name)
 
     def callback_init_app(self):
         pass
@@ -229,13 +212,43 @@ class SaikaApp(Flask):
         return self._configs
 
     @property
+    def module(self):
+        return self._module
+
+    @property
     def sub_modules(self):
         return self._sub_modules
 
     @property
+    def ext_modules(self):
+        modules = []
+        sub_modules_set = set(self.sub_modules)
+
+        def check_name(name: str):
+            module_parts = name.split('.')
+            module_root = module_parts[0]
+            if module_root in sys.builtin_module_names:
+                return False
+            for module_part in module_parts:
+                if module_part.startswith('_'):
+                    return False
+            return True
+
+        for module_name, module in sys.modules.items():
+            if getattr(module, '__package__', None) and module_name.find(module.__package__) == 0:
+                if module_name not in sub_modules_set and check_name(module_name) and \
+                        getattr(module, '__file__', None) and module_name.replace('.', '/') in module.__file__:
+                    modules.append(module_name)
+
+        return modules
+
+    @property
     def flask_cli(self):
         with self.app_context():
-            return FlaskGroup()
+            from flask_migrate.cli import db as db_cli
+            cli = FlaskGroup()
+            cli.add_command(db_cli)
+            return cli
 
     def load_configs(self):
         for config in self._configs.values():

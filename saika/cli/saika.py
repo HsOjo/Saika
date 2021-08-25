@@ -1,4 +1,7 @@
+import importlib
+import os
 import re
+from typing import Any
 
 import click
 
@@ -8,6 +11,7 @@ from saika.const import Const
 from saika.controller.cli import CliController
 from saika.controller.web import WebController
 from saika.decorator import *
+from saika.environ import Environ
 from saika.form import AUTO
 from saika.meta_table import MetaTable
 from saika.server import *
@@ -17,8 +21,13 @@ from saika.server import *
 class Saika(CliController):
     """Saika command-line interface, provided some assistant commands."""
 
+    def callback_before_register(self):
+        if not Environ.is_pyinstaller():
+            command(self.make.__func__)
+            command(self.lsmods.__func__)
+            command(self.docgen.__func__)
+
     @doc('Document Generator', 'Generate API document JSON Data.')
-    @command
     def docgen(self):
         app = self.app
 
@@ -89,14 +98,80 @@ class Saika(CliController):
         click.echo('Update Finished.')
 
     @doc('List Modules', 'Use for Packing...(Such as PyInstaller).')
-    @command
-    def lsmods(self):
-        modules = [
-            'engineio.async_drivers.gevent',
-            'gunicorn.glogging'
+    @click.option('-a', '--all', is_flag=True)
+    def lsmods(self, all: bool):
+        modules = self.app.sub_modules
+        if all:
+            modules += self.app.ext_modules
+
+        click.echo('\n'.join(modules))
+
+    @doc('Make Spec', 'Use for PyInstaller.')
+    @click.option('-n', '--name')
+    @click.option('-k', '--key', default=common.generate_uuid().replace('-', '')[:16])
+    @click.option('-F', '--onefile', is_flag=True)
+    @click.option('-b', '--build', is_flag=True)
+    @click.option('-d', '--datas', nargs=2, multiple=True)
+    @click.option('-h', '--hiddenimports', multiple=True)
+    @click.option('-P', '--collect-py-module', multiple=True)
+    @click.option('-D', '--collect-data', multiple=True)
+    @click.option('-B', '--collect-binaries', multiple=True)
+    @click.option('-S', '--collect-submodules', multiple=True)
+    @click.option('-A', '--collect-all', multiple=True)
+    @click.argument('main')
+    def make(self, main: str, build: bool, collect_py_module: tuple, **opts):
+        app_modules = self.app.sub_modules
+        ext_modules = self.app.ext_modules
+        all_modules = app_modules + ext_modules + [
+            'logging.config', 'gunicorn.glogging',
         ]
-        modules += self.app.sub_modules
-        click.echo(modules)
+        root_modules = [i for i in all_modules if '.' not in i]
+
+        opts['collect_data'] = list(opts.get('collect_data', ())) + root_modules
+        opts['hiddenimports'] = list(opts.get('hiddenimports', ())) + all_modules
+        datas = opts['datas'] = list(opts.get('datas', ()))
+
+        def add_module_data(module: Any, rel_path):
+            datas.append((
+                os.path.join(module.__path__[0], rel_path),
+                os.path.join(module.__package__, os.path.dirname(rel_path)),
+            ))
+
+        def collect_module_py(module):
+            module_name = module.__name__
+            module_dir = os.path.dirname(module.__file__)
+
+            sub_modules = common.walk_modules(module)
+            sub_files = common.walk_files(module_dir, lambda d, f, p: f.endswith('.py'))
+            sub_files = [f.replace(
+                module_dir, module_name
+            ).replace('/__init__', '').replace('.py', '').replace('/', '.') for f in sub_files]
+
+            py_files = list(set(sub_files) - set(sub_modules))
+            py_files = ['%s.py' % file.replace('.', '/').replace('%s/' % module_name, '', 1) for file in py_files]
+
+            for py_file in py_files:
+                add_module_data(module, py_file)
+
+        collect_py_module = [*collect_py_module, 'flask_migrate']
+        for name in collect_py_module:
+            collect_module_py(importlib.import_module(name))
+
+        opts.setdefault('copy_metadata', [])
+        opts.setdefault('recursive_copy_metadata', [])
+
+        try:
+            from PyInstaller.building import makespec, build_main
+        except ImportError:
+            raise Exception('You should install PyInstaller first.')
+        else:
+            path_spec = makespec.main([main], **opts)
+
+            if build:
+                opts_build = {}
+                opts_build.setdefault('distpath', './dist')
+                opts_build.setdefault('workpath', './build')
+                build_main.main(None, path_spec, True, **opts_build)
 
     @doc('Run', 'The Ultra %s Web Server.' % Const.project_name)
     @command

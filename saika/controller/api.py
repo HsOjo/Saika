@@ -3,7 +3,6 @@ import traceback
 
 from flask import jsonify
 
-from saika.enums import API_NOT_FOUND
 from saika.exception import AppException, APIException
 from .web import WebController
 from .. import hard_code
@@ -11,14 +10,6 @@ from .. import hard_code
 
 class APIController(WebController):
     def callback_before_register(self):
-        @self.blueprint.route('/<path:_>')
-        def not_found(_):
-            self.abort(404)
-
-        @self.blueprint.errorhandler(404)
-        def handle_404(e: Exception):
-            return APIException(*API_NOT_FOUND, data=dict(exc=str(e)))
-
         @self.blueprint.errorhandler(AppException)
         def convert(e: AppException):
             return APIException(e.error_code, e.msg, e.data)
