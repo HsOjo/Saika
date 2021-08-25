@@ -117,8 +117,6 @@ class SaikaApp(Flask):
                 cfg.refresh()
                 self._configs[cls] = cfg
 
-        self.config.setdefault('SQLALCHEMY_DATABASE_URI', "sqlite:///:memory:")
-        self.config.setdefault('SQLALCHEMY_TRACK_MODIFICATIONS', True)
         self.load_configs()
 
     def _init_app(self):
