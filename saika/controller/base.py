@@ -28,7 +28,7 @@ class BaseController:
         keys = []
         for parent_cls in self.__class__.__mro__[0:-2]:
             for k, v in parent_cls.__dict__.items():
-                if k[0] != '_' and not isinstance(v, property):
+                if not k.startswith('_') and not isinstance(v, property):
                     keys.append(k)
 
         return {k: getattr(self, k) for k in set(keys)}

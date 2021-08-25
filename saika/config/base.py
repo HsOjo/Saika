@@ -13,7 +13,7 @@ class BaseConfig:
         keys = []
         for parent_cls in self.__class__.mro()[0:-2]:
             for k, v in parent_cls.__dict__.items():
-                if k[0] != '_' and not isinstance(v, property) and not callable(v):
+                if not k.startswith('_') and not isinstance(v, property) and not callable(v):
                     keys.append(k)
 
         self._keys = set(keys)

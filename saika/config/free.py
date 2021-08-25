@@ -9,7 +9,7 @@ class FreeConfig(BaseConfig):
     @property
     def keys(self):
         keys = [*self.__class__.__dict__.keys(), *self.__dict__.keys()]
-        return [k for k in set(keys) if k[0] != '_']
+        return [k for k in set(keys) if not k.startswith('_')]
 
     def merge(self) -> dict:
         return self.data
