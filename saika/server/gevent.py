@@ -37,7 +37,7 @@ class Gevent(BaseServer):
         @app.after_request
         def print_log(resp: Response):
             req = Context.request
-            color = 'yellow' if resp.status_code != 200 else 'grey'
+            color = 'yellow' if resp.status_code != 200 else 'green'
             print('%(remote_addr)s - - [%(time)s] "%(request)s" %(status_code)s' % dict(
                 remote_addr=req.remote_addr,
                 time=time.strftime('%d/%b/%Y %H:%M:%S'),
