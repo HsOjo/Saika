@@ -72,13 +72,19 @@ def from_json(obj_str, **kwargs):
     return json.loads(obj_str, **kwargs)
 
 
-def walk_modules(module, prefix=None, module_dir=None, include_self=True):
+def walk_modules(module, prefix=None, module_dir=None, include_self=True, to_dict=False):
     result = []
 
     if module is not None:
         module_name = module.__name__
         if include_self:
-            result.append(module_name)
+            if to_dict:
+                result.append(dict(
+                    endpoint=module_name,
+                    is_pkg='__init__' in os.path.basename(module.__file__),
+                ))
+            else:
+                result.append(module_name)
         if prefix is None:
             prefix = module_name
 
@@ -93,12 +99,19 @@ def walk_modules(module, prefix=None, module_dir=None, include_self=True):
     for module_info in pkgutil.iter_modules([module_dir]):
         module_info: pkgutil.ModuleInfo
         module_endpoint = '%s.%s' % (prefix, module_info.name)
-        result.append(module_endpoint)
+        if to_dict:
+            result.append(dict(
+                endpoint=module_endpoint,
+                is_pkg=module_info.ispkg,
+            ))
+        else:
+            result.append(module_endpoint)
         if module_info.ispkg:
             result += walk_modules(
                 module=None,
                 prefix=module_endpoint,
-                module_dir=os.path.join(module_dir, module_info.name)
+                module_dir=os.path.join(module_dir, module_info.name),
+                to_dict=to_dict,
             )
 
     return result

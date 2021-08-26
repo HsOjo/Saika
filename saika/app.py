@@ -186,11 +186,20 @@ class SaikaApp(Flask):
             return
 
         keywords = ['controller', 'model', 'config']
-        for module_name in common.walk_modules(app_module):
-            for keyword in keywords:
-                if keyword in module_name:
-                    importlib.import_module(module_name)
-            self._sub_modules.append(module_name)
+        for module_info in common.walk_modules(app_module, to_dict=True):
+            endpoint = module_info['endpoint']
+            import_need = module_info['is_pkg']
+
+            if not import_need:
+                for keyword in keywords:
+                    if keyword in endpoint:
+                        import_need = True
+                        break
+
+            if import_need:
+                importlib.import_module(endpoint)
+
+            self._sub_modules.append(endpoint)
 
     def callback_init_app(self):
         pass
