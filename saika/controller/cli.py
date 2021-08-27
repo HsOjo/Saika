@@ -1,4 +1,5 @@
 from saika import hard_code
+from saika.decorator import command
 from saika.meta_table import MetaTable
 from .blueprint import BlueprintController
 
@@ -14,9 +15,17 @@ class CliController(BlueprintController):
 
         for f in self.methods:
             _f = f
-            if hasattr(f, '__func__'):
-                f = f.__func__
+            f = getattr(f, '__func__', f)
 
             if f in commands:
                 self._blueprint.cli.command()(_f)
                 self._functions.append(_f)
+
+    def bind_command(self, cmd):
+        cmd = getattr(cmd, '__func__', cmd)
+        cls = self.__class__
+        cmd_name = cmd.__name__
+        if not hasattr(cls, cmd_name):
+            setattr(cls, cmd_name, None)  # dummy attribute.
+        setattr(self, cmd_name, cmd)
+        command(cmd)

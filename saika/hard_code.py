@@ -41,7 +41,7 @@ AK_VALIDATE = 'validate'
 
 # region G Key
 GK_KEYS = '_keys'
-GK_CONTEXT = 'context'
+GK_VIEW_CONTEXT = 'view_context'
 GK_FORM = 'form'
 GK_SOCKET = 'socket'
 GK_RESPONSE_CODE = 'resp_code'
