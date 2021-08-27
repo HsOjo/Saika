@@ -47,7 +47,8 @@ class SaikaApp(Flask):
             import_name = self.__class__.__module__
 
         self._module = importlib.import_module(import_name)
-        self._module.__spec__ = None
+        if self._module.__spec__.origin is None:
+            self._module.__spec__ = None
         self._sub_modules = []
 
         if import_name == '__main__':
@@ -156,7 +157,10 @@ class SaikaApp(Flask):
         functions = []
         for controller in self._controllers:
             if isinstance(controller, CliController):
-                functions += [f.__func__ for f in controller.functions]
+                functions += [
+                    getattr(f, '__func__', f)
+                    for f in controller.functions
+                ]
 
         commands = MetaTable.get(hard_code.MI_GLOBAL, hard_code.MK_COMMANDS, [])  # type: list
 

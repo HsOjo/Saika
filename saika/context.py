@@ -35,7 +35,6 @@ class Context:
         if endpoint is None:
             endpoint = request.endpoint
         f = current_app.view_functions.get(endpoint)
-        if hasattr(f, '__func__'):
-            f = f.__func__
+        f = getattr(f, '__func__', f)
 
         return f

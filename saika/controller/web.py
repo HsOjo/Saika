@@ -44,8 +44,7 @@ class WebController(BlueprintController):
 
         for f in self.methods:
             _f = f
-            if hasattr(f, '__func__'):
-                f = f.__func__
+            f = getattr(f, '__func__', f)
 
             meta = MetaTable.all(f)
             if meta is not None:
