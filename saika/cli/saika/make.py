@@ -39,6 +39,7 @@ sys.argv = [
     '--build-base', tmp_dir, 
     '--build-lib', lib_dir,
     '--build-temp', tmp_dir,
+    '-j', multiprocessing.cpu_count(),
 ]
 
 paths = """%(paths)s""".split('\\n')
@@ -48,7 +49,6 @@ setup(
         paths, compiler_directives=dict(
             language_level=sys.version_info.major
         ),
-        nthreads=multiprocessing.cpu_count() * 2,
         build_dir=cpy_dir,
     )
 )
