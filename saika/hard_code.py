@@ -1,4 +1,5 @@
 SAIKA_DEBUG = 'SAIKA_DEBUG'
+SAIKA_DATA_DIR = 'SAIKA_DATA_DIR'
 
 # region Meta Item
 MI_GLOBAL = 'global'
