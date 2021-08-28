@@ -187,7 +187,7 @@ def make(main: str, build: bool, cythonize: bool, collect_py_module: tuple, **op
     if build:
         opts_build = {}
         dist_path = './dist'
-        shutil.rmtree(dist_path)
+        shutil.rmtree(dist_path, True)
         opts_build.setdefault('distpath', dist_path)
         opts_build.setdefault('workpath', './build')
         build_main.main(None, path_spec, True, **opts_build)
