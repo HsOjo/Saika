@@ -257,7 +257,7 @@ class SaikaApp(Flask):
             return True
 
         for module_name, module in sys.modules.items():
-            if getattr(module, '__package__', None) and module_name.find(module.__package__) == 0:
+            if getattr(module, '__package__', None) is not None and module_name.find(module.__package__) == 0:
                 if module_name not in sub_modules_set and check_name(module_name) and \
                         getattr(module, '__file__', None) and module_name.replace('.', '/') in module.__file__:
                     modules.append(module_name)
