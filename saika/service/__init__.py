@@ -74,11 +74,11 @@ class Service:
     def item(self, id, query_processes=(), **kwargs):
         return self.get_one(self.pk_filter(id), query_processes=query_processes, **kwargs)
 
-    def items(self, id, *ids, query_processes=(), **kwargs):
+    def items(self, *ids, query_processes=(), **kwargs):
         db.session.commit()
         return self._process_query(
             self.query_order, *query_processes,
-            lambda query: query.filter(self.pk_filter(id, *ids))
+            lambda query: query.filter(self.pk_filter(*ids))
         ).all()
 
     def add(self, **kwargs):
