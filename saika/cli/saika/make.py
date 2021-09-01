@@ -39,6 +39,7 @@ sys.argv = [
     '--build-base', tmp_dir, 
     '--build-lib', lib_dir,
     '--build-temp', tmp_dir,
+    '-j', multiprocessing.cpu_count(),
 ]
 
 paths = """%(paths)s""".split('\\n')
@@ -48,7 +49,6 @@ setup(
         paths, compiler_directives=dict(
             language_level=sys.version_info.major
         ),
-        nthreads=multiprocessing.cpu_count() * 2,
         build_dir=cpy_dir,
     )
 )
@@ -108,6 +108,7 @@ def build_lib_modules(modules, lib_dir=None):
 @click.option('-F', '--onefile', is_flag=True)
 @click.option('-b', '--build', is_flag=True)
 @click.option('-c', '--cythonize', is_flag=True)
+@click.option('-p', '--plaintext-py', is_flag=True)
 @click.option('-d', '--datas', nargs=2, multiple=True)
 @click.option('-h', '--hiddenimports', multiple=True)
 @click.option('-P', '--collect-py-module', multiple=True)
@@ -176,6 +177,8 @@ def make(main: str, build: bool, cythonize: bool, collect_py_module: tuple, **op
 
     opts.setdefault('copy_metadata', [])
     opts.setdefault('recursive_copy_metadata', [])
+    if opts.get('plaintext_py'):
+        opts.pop('key')
 
     try:
         from PyInstaller.building import makespec, build_main
@@ -187,7 +190,7 @@ def make(main: str, build: bool, cythonize: bool, collect_py_module: tuple, **op
     if build:
         opts_build = {}
         dist_path = './dist'
-        shutil.rmtree(dist_path)
+        shutil.rmtree(dist_path, True)
         opts_build.setdefault('distpath', dist_path)
         opts_build.setdefault('workpath', './build')
         build_main.main(None, path_spec, True, **opts_build)

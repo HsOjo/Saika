@@ -64,19 +64,25 @@ class Service:
             self.query_order, *query_processes
         ).paginate(page, per_page)
 
-    def item(self, id, query_processes=(), **kwargs):
+    def get_one(self, *filters, query_processes=(), **kwargs):
         db.session.commit()
         return self._process_query(
             self.query_filter, *query_processes,
-            lambda query: query.filter(self.pk_filter(id))
+            lambda query: query.filter(*filters)
         ).first()
 
-    def items(self, id, *ids, query_processes=(), **kwargs):
+    def get_all(self, *filters, query_processes=(), **kwargs):
         db.session.commit()
         return self._process_query(
             self.query_order, *query_processes,
-            lambda query: query.filter(self.pk_filter(id, *ids))
+            lambda query: query.filter(*filters)
         ).all()
+
+    def item(self, id, query_processes=(), **kwargs):
+        return self.get_one(self.pk_filter(id), query_processes=query_processes, **kwargs)
+
+    def items(self, *ids, query_processes=(), **kwargs):
+        return self.get_all(self.pk_filter(*ids), query_processes=query_processes, **kwargs)
 
     def add(self, **kwargs):
         model = self.model_class(**kwargs)

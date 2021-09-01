@@ -27,5 +27,5 @@ class CliController(BlueprintController):
         cmd_name = cmd.__name__
         if not hasattr(cls, cmd_name):
             setattr(cls, cmd_name, None)  # dummy attribute.
-        setattr(self, cmd_name, cmd)
+            setattr(self, cmd_name, cmd)
         command(cmd)

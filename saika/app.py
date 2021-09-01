@@ -99,13 +99,24 @@ class SaikaApp(Flask):
             else:
                 Environ.program_dir = self.root_path
 
-        Environ.config_path = os.path.join(Environ.program_dir, Const.config_file)
-        Environ.data_dir = os.path.abspath(os.path.join(Environ.program_dir, Const.data_dir))
+        self.set_data_dir()
+
+    def set_data_dir(self, data_dir=None):
+        if data_dir is None:
+            data_dir = os.getenv(
+                hard_code.SAIKA_DATA_DIR,
+                os.path.abspath(os.path.join(Environ.program_dir, Const.data_dir))
+            )
+
+        Environ.data_dir = data_dir
+        Environ.config_path = os.path.join(Environ.data_dir, Const.config_file)
         os.makedirs(Environ.data_dir, exist_ok=True)
+
+        self.load_configs()
 
     def _init_configs(self):
         if self._config_provider_default is None:
-            self._config_provider_default = FileProvider(Environ.config_path)
+            self._config_provider_default = FileProvider(lambda: Environ.config_path)
 
         config_classes = MetaTable.get(hard_code.MI_GLOBAL, hard_code.MK_CONFIG_CLASSES, [])
         for cls in config_classes:
@@ -246,10 +257,15 @@ class SaikaApp(Flask):
             return True
 
         for module_name, module in sys.modules.items():
-            if getattr(module, '__package__', None) and module_name.find(module.__package__) == 0:
-                if module_name not in sub_modules_set and check_name(module_name) and \
-                        getattr(module, '__file__', None) and module_name.replace('.', '/') in module.__file__:
-                    modules.append(module_name)
+            module_pkg = getattr(module, '__package__', None)
+            if module_pkg is not None and module_name.find(module_pkg) == 0:
+                module_path = getattr(module, '__file__', None)
+                if not module_path or (module_pkg == '' and '-packages' not in module_path):
+                    continue
+
+                if module_name not in sub_modules_set and check_name(module_name):
+                    if module_name.replace('.', '/') in module_path:
+                        modules.append(module_name)
 
         return modules
 
