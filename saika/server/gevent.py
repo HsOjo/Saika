@@ -15,7 +15,7 @@ class Gevent(BaseServer):
     def run(self, host, port, debug, use_reloader, ssl_crt, ssl_key, **kwargs):
         app = self.app
 
-        options = dict(debug=debug, use_reloader=use_reloader, certfile=ssl_crt, keyfile=ssl_key)
+        options = dict(debug=debug, use_reloader=use_reloader, certfile=ssl_crt, keyfile=ssl_key, **kwargs)
         for k, v in list(options.items()):
             if v is None:
                 options.pop(k)

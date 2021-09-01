@@ -44,12 +44,17 @@ class Saika(CliController):
     @click.option('-r', '--use-reloader', is_flag=True)
     @click.option('-c', '--ssl-crt', default=None)
     @click.option('-k', '--ssl-key', default=None)
+    @click.option('-o', '--option', type=(str, str), multiple=True)
     def run(self, host, port, type, debug, use_reloader, ssl_crt, ssl_key, **kwargs):
         if type is None:
             if self.app.env == 'production':
                 type = TYPE_GUNICORN
             else:
                 type = TYPE_GEVENT
+
+        for k, v in kwargs['option']:
+            kwargs[k] = v
+        kwargs.pop('option')
 
         SERVER_MAPPING[type](self.app).run(
             host, port, debug, use_reloader, ssl_crt, ssl_key, **kwargs

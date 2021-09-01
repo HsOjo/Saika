@@ -24,6 +24,7 @@ class GunicornApp(BaseApplication):
 
 class Gunicorn(BaseServer):
     def run(self, host, port, debug, use_reloader, ssl_crt, ssl_key, **kwargs):
+        kwargs.setdefault('timeout', 0)
         GunicornApp(app=self.app, config=dict(
             bind='%s:%s' % (host, port),
             workers=multiprocessing.cpu_count() * 2 + 1,
@@ -31,4 +32,5 @@ class Gunicorn(BaseServer):
             reload=use_reloader,
             certfile=ssl_crt,
             keyfile=ssl_key,
+            **kwargs,
         )).run()
