@@ -32,10 +32,10 @@ class Database(SQLAlchemy):
         engine = self.get_engine(**kwargs)  # type: Engine
         engine.dispose()
 
-    def query(self, model):
-        self.session.commit()
-        query = getattr(model, 'query')  # type: BaseQuery
-        return query
+    def query(self, *entities, commit=True, **kwargs):
+        if commit:
+            self.session.commit()
+        return self.session.query(*entities, **kwargs)
 
     @staticmethod
     def get_primary_key(model):

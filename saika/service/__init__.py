@@ -35,21 +35,7 @@ class Service:
 
     @property
     def query(self):
-        return db.query(self.model_class)
-
-    @property
-    def query_filter(self):
-        query = self.query
-        if self._filters:
-            query = query.filter(*self._filters)
-        return query
-
-    @property
-    def query_order(self):
-        query = self.query_filter
-        if self._orders:
-            query = query.order_by(*self._orders)
-        return query
+        return db.query(self.model_class, commit=self._auto_commit)
 
     @property
     def pk_field(self):
@@ -63,33 +49,35 @@ class Service:
         else:
             return self.pk_field.in_(ids)
 
-    def process_query(self, query=None, clear=True):
+    def process_query(self, query=None, filters=True, orders=True, clear=True):
         if query is None:
             query = self.query
+        if filters:
+            query = query.filter(*self._filters)
+        if orders:
+            query = query.order_by(*self._orders)
+
         for process in self._processes:
             query = process(query) if callable(process) else process
         if clear:
-            self._processes.clear()
+            self.processes_clear()
 
         if self._auto_commit:
             db.session.commit()
 
         return query
 
+    def processes_clear(self):
+        self._processes.clear()
+
     def list(self, page, per_page, **kwargs):
-        return self.process_query(
-            self.query_order
-        ).paginate(page, per_page, **kwargs)
+        return self.process_query().paginate(page, per_page, **kwargs)
 
     def get_one(self):
-        return self.process_query(
-            self.query_filter
-        ).first()
+        return self.process_query().first()
 
     def get_all(self):
-        return self.process_query(
-            self.query_order
-        ).all()
+        return self.process_query().all()
 
     def item(self, id, **kwargs):
         return self.filters(
@@ -111,7 +99,7 @@ class Service:
         result = self.filters(
             self.pk_filter(*ids)
         ).process_query(
-            self.query_filter
+            orders=False
         ).update(kwargs)
         if self._auto_commit:
             db.session.commit()
@@ -122,7 +110,7 @@ class Service:
         result = self.filters(
             self.pk_filter(*ids)
         ).process_query(
-            self.query_filter
+            orders=False
         ).delete()
         if self._auto_commit:
             db.session.commit()
