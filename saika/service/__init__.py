@@ -1,5 +1,6 @@
 from saika.database import db
 from .forms import FieldOperateForm
+from .. import common
 
 
 class Service:
@@ -127,4 +128,4 @@ class Service:
         if id_ is not None:
             ids = [id_, *ids]
 
-        return ids
+        return common.list_group_by(ids)
