@@ -22,7 +22,12 @@ class Service:
     def orders(self, *orders):
         return self.processes(lambda query: query.order_by(*orders))
 
-    def filters(self, *filters):
+    def filters(self, *filters, **model_eq_filters):
+        if model_eq_filters:
+            filters = list(filters)
+            for k, v in model_eq_filters.items():
+                filters.append(getattr(self.model_class, k).__eq__(v))
+
         return self.processes(lambda query: query.filter(*filters))
 
     def processes(self, *query_processes):
