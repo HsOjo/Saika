@@ -1,6 +1,7 @@
 from flask_sqlalchemy import BaseQuery
+from sqlalchemy import or_
 from sqlalchemy.sql import Join
-from wtforms import StringField, IntegerField, FieldList, FormField
+from wtforms import StringField, IntegerField, FieldList, FormField, BooleanField
 from wtforms.validators import DataRequired
 
 from saika import common
@@ -60,12 +61,14 @@ class PaginateForm(JSONForm):
 
 class AdvancedPaginateForm(PaginateForm):
     filters = FieldList(FormField(FieldOperateForm))
+    filters_or = BooleanField()
     orders = FieldList(FormField(FieldOperateForm))
 
     @property
     def data(self):
         data = super().data.copy()
         data.pop('filters')
+        data.pop('filters_or')
         data.pop('orders')
         return data
 
@@ -99,6 +102,8 @@ class AdvancedPaginateForm(PaginateForm):
             query = query.join(relationship_model)
 
         if filters:
+            if self.filters_or.data:
+                filters = [or_(*filters)]
             query = query.filter(*filters)
         if orders:
             query = query.order_by(*orders)
