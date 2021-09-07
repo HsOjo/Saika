@@ -138,7 +138,8 @@ class Database(SQLAlchemy):
             for column in dump_columns:
                 if callable(column):
                     patch = column(instance)  # type: dict
-                    data.update(patch)
+                    if patch:
+                        data.update(patch)
                 elif isinstance(column, str):
                     data[column] = getattr(instance, column)
                 else:
