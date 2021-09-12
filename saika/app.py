@@ -200,7 +200,7 @@ class SaikaApp(Flask):
         if app_module is None or app_module.__name__.startswith(Const.project_name.lower()):
             return
 
-        keywords = ['controller', 'model', 'config']
+        keywords = ['controller', 'model', 'config', 'service']
         for module_info in common.walk_modules(app_module, to_dict=True):
             endpoint = module_info['endpoint']
             import_need = module_info['is_pkg']
