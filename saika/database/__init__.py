@@ -32,10 +32,10 @@ class Database(SQLAlchemy):
         engine = self.get_engine(**kwargs)  # type: Engine
         engine.dispose()
 
-    def query(self, model):
-        self.session.commit()
-        query = getattr(model, 'query')  # type: BaseQuery
-        return query
+    def query(self, *entities, commit=True, **kwargs):
+        if commit:
+            self.session.commit()
+        return self.session.query(*entities, **kwargs)
 
     @staticmethod
     def get_primary_key(model):
@@ -138,7 +138,8 @@ class Database(SQLAlchemy):
             for column in dump_columns:
                 if callable(column):
                     patch = column(instance)  # type: dict
-                    data.update(patch)
+                    if patch:
+                        data.update(patch)
                 elif isinstance(column, str):
                     data[column] = getattr(instance, column)
                 else:

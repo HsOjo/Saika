@@ -1,5 +1,6 @@
 from saika.database import db
 from .forms import FieldOperateForm
+from .. import common
 
 
 class Service:
@@ -7,32 +8,40 @@ class Service:
         self.model_class = model_class
         self.model_pks = db.get_primary_key(model_class)
 
-        self.orders = None
-        self.filters = None
+        self._orders = []
+        self._filters = []
+
+        self._processes = []
+        self._auto_commit = True
 
     def set_orders(self, *orders):
-        self.orders = orders
+        self._orders = orders
 
     def set_filters(self, *filters):
-        self.filters = filters
+        self._filters = filters
+
+    def orders(self, *orders):
+        return self.processes(lambda query: query.order_by(*orders))
+
+    def filters(self, *filters, **model_eq_filters):
+        if model_eq_filters:
+            filters = list(filters)
+            for k, v in model_eq_filters.items():
+                filters.append(getattr(self.model_class, k).__eq__(v))
+
+        return self.processes(lambda query: query.filter(*filters))
+
+    def processes(self, *query_processes):
+        self._processes += query_processes
+        return self
+
+    def auto_commit(self, enable=True):
+        self._auto_commit = enable
+        return self
 
     @property
     def query(self):
-        return db.query(self.model_class)
-
-    @property
-    def query_filter(self):
-        query = self.query
-        if self.filters:
-            query = query.filter(*self.filters)
-        return query
-
-    @property
-    def query_order(self):
-        query = self.query_filter
-        if self.orders:
-            query = query.order_by(*self.orders)
-        return query
+        return db.query(self.model_class, commit=self._auto_commit)
 
     @property
     def pk_field(self):
@@ -46,61 +55,77 @@ class Service:
         else:
             return self.pk_field.in_(ids)
 
-    def _process_query(self, query=None, *processes):
+    def process_query(self, query=None, filters=True, orders=True, clear=True):
         if query is None:
             query = self.query
+        if filters:
+            query = query.filter(*self._filters)
+        if orders:
+            query = query.order_by(*self._orders)
 
-        for process in processes:
-            if callable(process):
-                query = process(query)
-            else:
-                query = process
+        for process in self._processes:
+            query = process(query) if callable(process) else process
+        if clear:
+            self.processes_clear()
+
+        if self._auto_commit:
+            db.session.commit()
 
         return query
 
-    def list(self, page, per_page, query_processes=(), **kwargs):
-        db.session.commit()
-        return self._process_query(
-            self.query_order, *query_processes
-        ).paginate(page, per_page)
+    def processes_clear(self):
+        self._processes.clear()
 
-    def get_one(self, *filters, query_processes=(), **kwargs):
-        db.session.commit()
-        return self._process_query(
-            self.query_filter, *query_processes,
-            lambda query: query.filter(*filters)
-        ).first()
+    def list(self, page, per_page, **kwargs):
+        return self.process_query().paginate(page, per_page, **kwargs)
 
-    def get_all(self, *filters, query_processes=(), **kwargs):
-        db.session.commit()
-        return self._process_query(
-            self.query_order, *query_processes,
-            lambda query: query.filter(*filters)
-        ).all()
+    def get_one(self):
+        return self.process_query().first()
 
-    def item(self, id, query_processes=(), **kwargs):
-        return self.get_one(self.pk_filter(id), query_processes=query_processes, **kwargs)
+    def get_all(self):
+        return self.process_query().all()
 
-    def items(self, *ids, query_processes=(), **kwargs):
-        return self.get_all(self.pk_filter(*ids), query_processes=query_processes, **kwargs)
+    def item(self, id, **kwargs):
+        return self.filters(
+            self.pk_filter(id)
+        ).get_one()
+
+    def items(self, *ids, **kwargs):
+        return self.filters(
+            self.pk_filter(*ids)
+        ).get_all()
 
     def add(self, **kwargs):
         model = self.model_class(**kwargs)
         db.add_instance(model)
         return model
 
-    def edit(self, id, *ids, query_processes=(), **kwargs):
-        result = self._process_query(
-            self.query_filter, *query_processes,
-            lambda query: query.filter(self.pk_filter(id, *ids))
+    def edit(self, *ids, **kwargs):
+        ids = self.collect_ids(ids, kwargs)
+        result = self.filters(
+            self.pk_filter(*ids)
+        ).process_query(
+            orders=False
         ).update(kwargs)
-        db.session.commit()
+        if self._auto_commit:
+            db.session.commit()
         return result
 
-    def delete(self, id, *ids, query_processes=(), **kwargs):
-        result = self._process_query(
-            self.query_filter, *query_processes,
-            lambda query: query.filter(self.pk_filter(id, *ids))
+    def delete(self, *ids, **kwargs):
+        ids = self.collect_ids(ids, kwargs)
+        result = self.filters(
+            self.pk_filter(*ids)
+        ).process_query(
+            orders=False
         ).delete()
-        db.session.commit()
+        if self._auto_commit:
+            db.session.commit()
         return result
+
+    @staticmethod
+    def collect_ids(ids, kwargs):
+        id_ = kwargs.pop('id', None)
+        if id_ is not None:
+            ids = [id_, *ids]
+
+        return common.list_group_by(ids)
