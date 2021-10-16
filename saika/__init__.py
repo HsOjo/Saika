@@ -8,7 +8,7 @@ from .app import SaikaApp
 from .config import Config, BaseConfig, ConfigProvider, FileProvider
 from .const import Const
 from .context import Context
-from .controller import WebController, APIController, ViewControlller
+from .controller import WebController, APIController, ViewController
 from .cors import cors
 from .database import db, migrate
 from .environ import Environ
