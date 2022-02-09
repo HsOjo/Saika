@@ -3,6 +3,25 @@ from .forms import FieldOperateForm
 from .. import common
 
 
+def with_auto_commit(f):
+    def wrapper(*args, **kwargs):
+        self = args[0]  # type: Service
+        result = f(*args, **kwargs)
+        self._do_auto_commit()
+        return result
+
+    return wrapper
+
+
+def with_pk_filter(f):
+    def wrapper(*args, **kwargs):
+        self = args[0]  # type: Service
+        self.__class__._append_pk_filter(*args, **kwargs)
+        return f(*args, **kwargs)
+
+    return wrapper
+
+
 class Service:
     def __init__(self, model_class):
         self.model_class = model_class
@@ -13,6 +32,12 @@ class Service:
 
         self._processes = []
         self._auto_commit = True
+        self._without_pk_filter = False
+
+    @property
+    def without_pk_filter(self):
+        self._without_pk_filter = True
+        return self
 
     def set_orders(self, *orders):
         self._orders = orders
@@ -22,6 +47,9 @@ class Service:
 
     def orders(self, *orders):
         return self.processes(lambda query: query.order_by(*orders))
+
+    def join(self, target, *props, **kwargs):
+        return self.processes(lambda query: query.join(target, *props, **kwargs))
 
     def filters(self, *filters, **model_eq_filters):
         if model_eq_filters:
@@ -35,9 +63,8 @@ class Service:
         self._processes += query_processes
         return self
 
-    def auto_commit(self, enable=True):
+    def set_auto_commit(self, enable=True):
         self._auto_commit = enable
-        return self
 
     @property
     def query(self):
@@ -75,6 +102,7 @@ class Service:
 
     def processes_clear(self):
         self._processes.clear()
+        self._without_pk_filter = False
 
     def list(self, page, per_page, **kwargs):
         return self.process_query().paginate(page, per_page, **kwargs)
@@ -84,6 +112,9 @@ class Service:
 
     def get_all(self):
         return self.process_query().all()
+
+    def count(self):
+        return self.process_query().count()
 
     def item(self, id, **kwargs):
         return self.filters(
@@ -95,32 +126,36 @@ class Service:
             self.pk_filter(*ids)
         ).get_all()
 
+    @with_auto_commit
     def add(self, **kwargs):
         model = self.model_class(**kwargs)
-        db.add_instance(model)
+        db.session.add(model)
         return model
 
+    @with_pk_filter
+    @with_auto_commit
     def edit(self, *ids, **kwargs):
-        ids = self.collect_ids(ids, kwargs)
-        result = self.filters(
-            self.pk_filter(*ids)
-        ).process_query(
+        return self.process_query(
             orders=False
         ).update(kwargs)
-        if self._auto_commit:
-            db.session.commit()
-        return result
 
+    @with_pk_filter
+    @with_auto_commit
     def delete(self, *ids, **kwargs):
-        ids = self.collect_ids(ids, kwargs)
-        result = self.filters(
-            self.pk_filter(*ids)
-        ).process_query(
+        return self.process_query(
             orders=False
         ).delete()
+
+    def _do_auto_commit(self):
         if self._auto_commit:
             db.session.commit()
-        return result
+
+    def _append_pk_filter(self, *ids, **kwargs):
+        if self._without_pk_filter:
+            return
+
+        ids = self.collect_ids(ids, kwargs)
+        self.filters(self.pk_filter(*ids))
 
     @staticmethod
     def collect_ids(ids, kwargs):
