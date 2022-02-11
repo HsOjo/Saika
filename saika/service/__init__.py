@@ -110,11 +110,14 @@ class Service:
     def get_one(self):
         return self.process_query().first()
 
-    def get_all(self):
-        return self.process_query().all()
+    def get_all(self, limit=None):
+        query = self.process_query()
+        if limit:
+            query = query.limit(limit)
+        return query.all()
 
     def count(self):
-        return self.process_query().count()
+        return self.process_query(orders=False).count()
 
     def item(self, id, **kwargs):
         return self.filters(
