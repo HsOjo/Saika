@@ -1,6 +1,6 @@
 import json
 
-from geventwebsocket import WebSocketError
+from geventwebsocket.exceptions import WebSocketError
 from geventwebsocket.websocket import WebSocket, MSG_SOCKET_DEAD
 
 from saika import hard_code, common

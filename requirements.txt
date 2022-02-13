@@ -5,6 +5,7 @@ Flask-SocketIO==4.3.2
 Flask-Sockets
 Flask-SQLAlchemy
 Flask-WTF
+wtforms==2.3.3
 wtforms_json
 itsdangerous==1.1.0
 termcolor

@@ -7,7 +7,7 @@ from saika.meta_table import MetaTable
 from .web import WebController
 
 
-class ViewControlller(WebController):
+class ViewController(WebController):
     def assign(self, **kwargs):
         view_context = self.context.g_get(hard_code.GK_VIEW_CONTEXT)
         if view_context is None:
