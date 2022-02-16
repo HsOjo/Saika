@@ -10,3 +10,4 @@ wtforms_json
 itsdangerous==1.1.0
 termcolor
 gunicorn
+wheel
