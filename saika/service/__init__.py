@@ -39,6 +39,11 @@ class Service:
         self._without_pk_filter = True
         return self
 
+    @property
+    def associate_mode(self):
+        self.filters(self.pk_filter(*self.get_pks()))
+        return self.without_pk_filter
+
     def set_orders(self, *orders):
         self._orders = orders
 
@@ -110,11 +115,11 @@ class Service:
     def get_one(self):
         return self.process_query().first()
 
-    def get_all(self, limit=None):
-        query = self.process_query()
-        if limit:
-            query = query.limit(limit)
-        return query.all()
+    def get_all(self):
+        return self.process_query().all()
+
+    def get_pks(self):
+        return list(map(lambda item: item[0], self.process_query().values(self.pk_field)))
 
     def count(self):
         return self.process_query(orders=False).count()
