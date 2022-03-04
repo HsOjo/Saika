@@ -109,18 +109,23 @@ class Service:
         self._processes.clear()
         self._without_pk_filter = False
 
+    @with_auto_commit
     def list(self, page, per_page, **kwargs):
         return self.process_query().paginate(page, per_page, **kwargs)
 
+    @with_auto_commit
     def get_one(self):
         return self.process_query().first()
 
+    @with_auto_commit
     def get_all(self):
         return self.process_query().all()
 
+    @with_auto_commit
     def get_pks(self):
         return list(map(lambda item: item[0], self.process_query().values(self.pk_field)))
 
+    @with_auto_commit
     def count(self):
         return self.process_query(orders=False).count()
 
