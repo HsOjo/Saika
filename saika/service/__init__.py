@@ -39,10 +39,20 @@ class Service:
         self._without_pk_filter = True
         return self
 
-    @property
-    def associate_mode(self):
-        self.filters(self.pk_filter(*self.get_pks()))
-        return self.without_pk_filter
+    def associate_do(self, f):
+        pks = self.get_pks()
+        if pks:
+            return f(pks)
+
+    def associate_edit(self, **kwargs):
+        return self.associate_do(
+            lambda pks: self.edit(*pks, **kwargs)
+        ) or 0
+
+    def associate_delete(self, **kwargs):
+        return self.associate_do(
+            lambda pks: self.delete(*pks, **kwargs)
+        ) or 0
 
     def set_orders(self, *orders):
         self._orders = orders
