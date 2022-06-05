@@ -39,6 +39,21 @@ class Service:
         self._without_pk_filter = True
         return self
 
+    def associate_do(self, f):
+        pks = self.get_pks()
+        if pks:
+            return f(pks)
+
+    def associate_edit(self, **kwargs):
+        return self.associate_do(
+            lambda pks: self.edit(*pks, **kwargs)
+        ) or 0
+
+    def associate_delete(self, **kwargs):
+        return self.associate_do(
+            lambda pks: self.delete(*pks, **kwargs)
+        ) or 0
+
     def set_orders(self, *orders):
         self._orders = orders
 
@@ -104,18 +119,23 @@ class Service:
         self._processes.clear()
         self._without_pk_filter = False
 
+    @with_auto_commit
     def list(self, page, per_page, **kwargs):
         return self.process_query().paginate(page, per_page, **kwargs)
 
+    @with_auto_commit
     def get_one(self):
         return self.process_query().first()
 
-    def get_all(self, limit=None):
-        query = self.process_query()
-        if limit:
-            query = query.limit(limit)
-        return query.all()
+    @with_auto_commit
+    def get_all(self):
+        return self.process_query().all()
 
+    @with_auto_commit
+    def get_pks(self):
+        return list(map(lambda item: item[0], self.process_query().values(self.pk_field)))
+
+    @with_auto_commit
     def count(self):
         return self.process_query(orders=False).count()
 

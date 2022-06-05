@@ -100,6 +100,7 @@ class SaikaApp(Flask):
                 Environ.program_dir = self.root_path
 
         self.set_data_dir()
+        self.callback_init_env()
 
     def set_data_dir(self, data_dir=None):
         if data_dir is None:
@@ -215,6 +216,9 @@ class SaikaApp(Flask):
                 importlib.import_module(endpoint)
 
             self._sub_modules.append(endpoint)
+
+    def callback_init_env(self):
+        pass
 
     def callback_init_app(self):
         pass
