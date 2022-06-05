@@ -9,7 +9,7 @@ class ConnectDBConfig(DatabaseConfig):
     password = '[password]'
     host = 'localhost'
     port = 3306
-    database = Const.project_name
+    database = '[database]'
 
     def merge(self) -> dict:
         result = super().merge()
