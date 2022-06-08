@@ -1,7 +1,11 @@
+import logging
 import multiprocessing
 
+import termcolor
+from flask import Response
 from gunicorn.app.base import BaseApplication
 
+from saika.context import Context
 from saika.server.base import BaseServer
 
 
@@ -25,6 +29,26 @@ class GunicornApp(BaseApplication):
 class Gunicorn(BaseServer):
     def run(self, host, port, debug, use_reloader, ssl_crt, ssl_key, **kwargs):
         kwargs.setdefault('timeout', 0)
+        logger = logging.getLogger('gunicorn.error')
+
+        @self.app.after_request
+        def print_log(resp: Response):
+            f_log = logger.error if resp.status_code != 200 else logger.info
+
+            req = Context.request
+            color = 'yellow' if resp.status_code != 200 else 'green'
+
+            f_log('%(remote_addr)s - "%(request)s" %(status_code)s' % dict(
+                remote_addr=req.remote_addr,
+                request=termcolor.colored('%(method)s %(path)s %(protocol)s' % dict(
+                    method=req.method,
+                    path=req.path,
+                    protocol=req.environ.get('SERVER_PROTOCOL'),
+                ), color),
+                status_code=resp.status_code,
+            ))
+            return resp
+
         GunicornApp(app=self.app, config=dict(
             bind='%s:%s' % (host, port),
             workers=multiprocessing.cpu_count() * 2 + 1,
