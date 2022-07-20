@@ -1,13 +1,11 @@
-import re
-
-from saika import hard_code
+from saika import hard_code, common
 from saika.meta_table import MetaTable
 
 
 class BaseController:
     def __init__(self):
-        name = self.__class__.__name__.replace('Controller', '')
-        self._name = re.sub('[A-Z]', lambda x: '_' + x.group().lower(), name).lstrip('_')
+        self._name = common.get_lower_name(
+            self.__class__.__name__.replace('Controller', ''))
         self._import_name = self.__class__.__module__
 
     @property

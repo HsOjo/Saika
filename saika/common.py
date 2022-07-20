@@ -52,9 +52,11 @@ def rule_to_rest(rule_str):
 
 
 def list_group_by(x):
+    buffer = set()
     result = []
     for i in x:
-        if i not in result:
+        if i not in buffer:
+            buffer.add(i)
             result.append(i)
     return result
 
@@ -70,6 +72,10 @@ def to_json(obj, **kwargs):
 
 def from_json(obj_str, **kwargs):
     return json.loads(obj_str, **kwargs)
+
+
+def get_lower_name(name):
+    return re.sub('[A-Z]', lambda x: '_' + x.group().lower(), name).lstrip('_')
 
 
 def walk_modules(module, prefix=None, module_dir=None, include_self=True, to_dict=False):
