@@ -17,7 +17,8 @@ class APIController(WebController):
         @self.blueprint.errorhandler(Exception)
         def catch(e: Exception):
             traceback.print_exc(file=sys.stderr)
-            return APIException(data=dict(exc=repr(e)))
+            [exc_str] = list(traceback.TracebackException(*sys.exc_info()).format_exception_only())
+            return APIException(data=dict(exc=exc_str))
 
     def _record_response(self, code, msg):
         self.context.g_set(hard_code.GK_RESPONSE_CODE, code)
